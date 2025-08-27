@@ -4,7 +4,7 @@
   "description": "Customer tracking and appointment management for T-Mobile retail locations",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8F9FA",
+  "background_color": "#FFFFFF",
   "theme_color": "#E31837",
   "orientation": "portrait-primary",
   "icons": [
@@ -23,5 +23,21 @@
   ],
   "categories": ["business", "productivity"],
   "lang": "en-US",
-  "scope": "/"
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View dashboard and metrics",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "description": "View appointments and schedule",
+      "url": "/calendar",
+      "icons": [{ "src": "/icon.png", "sizes": "96x96" }]
+    }
+  ]
 }

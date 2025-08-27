@@ -1,68 +1,179 @@
+/* Global Styles for SetLined */
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* T-Mobile Official Color Palette */
+  --t-mobile-magenta: #E31837;
+  --t-mobile-magenta-light: #FF6B7D;
+  --t-mobile-magenta-dark: #B01329;
+  --t-mobile-white: #FFFFFF;
+  --t-mobile-black: #000000;
+  --t-mobile-gray-50: #F8F9FA;
+  --t-mobile-gray-100: #E9ECEF;
+  --t-mobile-gray-200: #DEE2E6;
+  --t-mobile-gray-300: #CED4DA;
+  --t-mobile-gray-400: #ADB5BD;
+  --t-mobile-gray-500: #6C757D;
+  --t-mobile-gray-600: #495057;
+  --t-mobile-gray-700: #343A40;
+  --t-mobile-gray-800: #212529;
+  --t-mobile-gray-900: #000000;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Status Colors */
+  --t-mobile-success: #28A745;
+  --t-mobile-warning: #FFC107;
+  --t-mobile-error: #DC3545;
+  --t-mobile-info: #17A2B8;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+/* Ensure Google Sans font is applied globally */
+* {
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Body styles */
+body {
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--t-mobile-white);
+  color: var(--t-mobile-black);
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+::-webkit-scrollbar-track {
+  background: var(--t-mobile-gray-100);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+::-webkit-scrollbar-thumb {
+  background: var(--t-mobile-gray-400);
+  border-radius: 4px;
 }
 
-button {
+::-webkit-scrollbar-thumb:hover {
+  background: var(--t-mobile-gray-500);
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid var(--t-mobile-magenta);
+  outline-offset: 2px;
+}
+
+/* Button hover effects */
+.MuiButton-root:hover {
+  background-color: var(--t-mobile-magenta-light) !important;
+}
+
+/* Card styles */
+.MuiCard-root {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--t-mobile-gray-200) !important;
+}
+
+/* Input field styles */
+.MuiTextField-root .MuiOutlinedInput-root {
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Navigation styles */
+.MuiDrawer-paper {
+  background: linear-gradient(135deg, var(--t-mobile-magenta) 0%, var(--t-mobile-magenta-dark) 100%) !important;
+}
+
+.MuiDrawer-paper .MuiListItemButton-root {
+  color: var(--t-mobile-white) !important;
+}
+
+.MuiDrawer-paper .MuiListItemButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.MuiDrawer-paper .MuiListItemIcon-root {
+  color: var(--t-mobile-white) !important;
+}
+
+/* App bar styles */
+.MuiAppBar-root {
+  background: linear-gradient(135deg, var(--t-mobile-magenta) 0%, var(--t-mobile-magenta-dark) 100%) !important;
+  box-shadow: 0 2px 12px rgba(227, 24, 55, 0.3) !important;
+}
+
+/* Chip styles */
+.MuiChip-root {
+  border-radius: 6px !important;
+}
+
+/* Loading spinner color */
+.MuiCircularProgress-root {
+  color: var(--t-mobile-magenta) !important;
+}
+
+/* Alert styles */
+.MuiAlert-root {
+  border-radius: 8px !important;
+}
+
+/* Tab styles */
+.MuiTabs-root .MuiTab-root {
+  font-family: 'Google Sans', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* Dialog styles */
+.MuiDialog-paper {
+  border-radius: 12px !important;
+}
+
+/* Table styles */
+.MuiTableHead-root .MuiTableCell-head {
+  font-weight: 600 !important;
+  background-color: var(--t-mobile-gray-50) !important;
+  color: var(--t-mobile-gray-800) !important;
+}
+
+/* Form control styles */
+.MuiFormControl-root .MuiInputLabel-root {
+  font-family: 'Google Sans', sans-serif !important;
+}
+
+.MuiFormControl-root .MuiOutlinedInput-root {
+  font-family: 'Google Sans', sans-serif !important;
+}
+
+/* Ensure all text uses Google Sans */
+.MuiTypography-root {
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+}
+
+/* Custom utility classes */
+.text-t-mobile-magenta {
+  color: var(--t-mobile-magenta) !important;
+}
+
+.bg-t-mobile-magenta {
+  background-color: var(--t-mobile-magenta) !important;
+}
+
+.border-t-mobile-magenta {
+  border-color: var(--t-mobile-magenta) !important;
+}
+
+/* Responsive design helpers */
+@media (max-width: 600px) {
+  .MuiDrawer-paper {
+    width: 280px !important;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+
+  .MuiAppBar-root {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }

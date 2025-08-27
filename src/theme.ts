@@ -1,39 +1,84 @@
 import { createTheme } from '@mui/material/styles';
 
-// T-Mobile inspired color palette
+// Official T-Mobile Color Palette
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#E31837', // T-Mobile red
+      main: '#E31837', // T-Mobile Magenta
       light: '#FF6B7D',
       dark: '#B01329',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#6C757D', // Gray
+      main: '#6C757D', // Cool Gray
       light: '#9CA3AF',
       dark: '#495057',
       contrastText: '#FFFFFF',
     },
     background: {
-      default: '#F8F9FA',
+      default: '#FFFFFF', // T-Mobile White
       paper: '#FFFFFF',
     },
     text: {
-      primary: '#212529',
+      primary: '#000000', // T-Mobile Black
       secondary: '#6C757D',
+    },
+    error: {
+      main: '#DC3545', // T-Mobile Error Red
+    },
+    warning: {
+      main: '#FFC107', // T-Mobile Warning Yellow
+    },
+    success: {
+      main: '#28A745', // T-Mobile Success Green
+    },
+    info: {
+      main: '#17A2B8', // T-Mobile Info Blue
     },
   },
   typography: {
-    fontFamily: '"Google Sans", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+    h1: {
+      fontWeight: 700,
+      fontSize: '2.5rem',
+      lineHeight: 1.2,
+    },
+    h2: {
+      fontWeight: 600,
+      fontSize: '2rem',
+      lineHeight: 1.3,
+    },
+    h3: {
+      fontWeight: 600,
+      fontSize: '1.75rem',
+      lineHeight: 1.4,
+    },
     h4: {
       fontWeight: 600,
+      fontSize: '1.5rem',
+      lineHeight: 1.4,
     },
     h5: {
       fontWeight: 600,
+      fontSize: '1.25rem',
+      lineHeight: 1.5,
     },
     h6: {
       fontWeight: 600,
+      fontSize: '1rem',
+      lineHeight: 1.5,
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
+    },
+    button: {
+      fontWeight: 500,
+      textTransform: 'none',
     },
   },
   components: {
