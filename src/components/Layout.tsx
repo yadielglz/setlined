@@ -67,9 +67,19 @@ const Layout = ({ children }: LayoutProps) => {
   const drawer = (
     <div>
       <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          SetLined
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="SetLined Logo"
+            sx={{
+              height: 40,
+              width: 'auto',
+              maxWidth: 150,
+              objectFit: 'contain'
+            }}
+          />
+        </Box>
       </Toolbar>
       <Divider />
       <List>

@@ -101,9 +101,23 @@ const Login: React.FC = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Sign In to SetLined
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="SetLined Logo"
+              sx={{
+                height: 60,
+                width: 'auto',
+                maxWidth: 200,
+                objectFit: 'contain',
+                mb: 2
+              }}
+            />
+            <Typography component="h1" variant="h4" align="center">
+              Sign In to SetLined
+            </Typography>
+          </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
           <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
@@ -144,9 +158,23 @@ const Login: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Create Account
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="SetLined Logo"
+              sx={{
+                height: 60,
+                width: 'auto',
+                maxWidth: 200,
+                objectFit: 'contain',
+                mb: 2
+              }}
+            />
+            <Typography component="h1" variant="h4" align="center">
+              Create Account
+            </Typography>
+          </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Box component="form" onSubmit={handleSignup} sx={{ mt: 1 }}>
             <TextField
