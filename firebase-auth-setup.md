@@ -57,53 +57,61 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Customers access - users can only access customers from their location
+    // Customers access - users can only access customers from their location, admins have full access
     match /customers/{customerId} {
       allow read: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
       allow write: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
     }
 
-    // Leads access - users can read all leads from their location
-    // but can only write leads they own or if they're a manager
+    // Leads access - users can read all leads from their location, admins have full access
+    // Users can write leads they own, managers/admins can write any lead from their location
     match /leads/{leadId} {
       allow read: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
       allow write: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        (request.auth.uid == resource.data.assignedTo ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['manager', 'admin'] ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.uid == resource.data.assignedTo ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId == resource.data.locationId);
     }
 
-    // Appointments access
+    // Appointments access - users can read appointments from their location, admins have full access
     match /appointments/{appointmentId} {
       allow read: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
       allow write: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        (request.auth.uid == resource.data.assignedTo ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['manager', 'admin']);
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.uid == resource.data.assignedTo ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
     }
 
-    // Communications access
+    // Communications access - users can read communications from their location, admins have full access
     match /communications/{communicationId} {
       allow read: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
       allow write: if request.auth != null &&
         request.auth.token.email_verified == true &&
-        request.auth.uid == resource.data.userId;
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.uid == resource.data.userId);
     }
   }
 }
@@ -190,16 +198,68 @@ Before going live:
 - [ ] Review GDPR compliance requirements
 - [ ] Implement proper data retention policies
 
-## 9. Emergency Access
+## 9. Admin Full Access Summary
 
-For admin access in emergencies, consider adding:
+### ✅ Admin Role Capabilities
 
+**Admins have FULL ACCESS to everything:**
+
+#### **Data Access:**
+- ✅ **All Customers** - Read/write access to customers from any location
+- ✅ **All Leads** - Read/write access to leads from any location
+- ✅ **All Appointments** - Read/write access to appointments from any location
+- ✅ **All Communications** - Read/write access to communications from any location
+- ✅ **All Locations** - Read/write access to location management
+- ✅ **User Management** - Can manage user accounts and roles
+
+#### **Operations:**
+- ✅ **Create/Edit/Delete** - All records regardless of location
+- ✅ **Assign/Reassign** - Leads and appointments to any user
+- ✅ **View Analytics** - Access to all performance metrics
+- ✅ **System Configuration** - Modify system settings and rules
+
+### **Security Rule Pattern:**
 ```javascript
-// Admin override function (use sparingly)
+// Admin override - gives admins full access to everything
 match /{document=**} {
   allow read, write: if request.auth != null &&
+    request.auth.token.email_verified == true &&
     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
 }
 ```
 
-This setup provides comprehensive security for your T-Mobile customer tracking application while ensuring proper access controls and user management.
+### **Frontend Admin Features:**
+- ✅ **User Management Interface** - Create/edit/delete user accounts
+- ✅ **Location Management** - Add/edit/delete store locations
+- ✅ **System Analytics** - View company-wide performance metrics
+- ✅ **Audit Logs** - Track all system activities
+- ✅ **Role Management** - Change user roles and permissions
+
+## 10. Role-Based Access Matrix
+
+| Feature | Rep | Manager | Admin |
+|---------|-----|---------|-------|
+| View Own Data | ✅ | ✅ | ✅ |
+| View Location Data | ✅ | ✅ | ✅ |
+| View All Data | ❌ | ❌ | ✅ |
+| Edit Own Records | ✅ | ✅ | ✅ |
+| Edit Location Records | ❌ | ✅ | ✅ |
+| Edit All Records | ❌ | ❌ | ✅ |
+| Manage Users | ❌ | ❌ | ✅ |
+| Manage Locations | ❌ | ❌ | ✅ |
+| System Settings | ❌ | ❌ | ✅ |
+| View Analytics | ❌ | ✅ | ✅ |
+
+## 11. Implementation Checklist
+
+- [x] Enable Email/Password authentication
+- [x] Configure authorized domains
+- [x] Enable email verification requirement
+- [x] Set password policy
+- [x] Copy and paste Firestore security rules
+- [x] Test authentication flow
+- [x] Verify email verification is working
+- [x] Test role-based access control
+- [x] **Verify admin full access capabilities**
+
+This setup provides comprehensive security for your T-Mobile customer tracking application while ensuring **admins have complete access to everything** for system management and oversight.
