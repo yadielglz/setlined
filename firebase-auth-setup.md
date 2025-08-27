@@ -198,6 +198,53 @@ Before going live:
 - [ ] Review GDPR compliance requirements
 - [ ] Implement proper data retention policies
 
+## 8. Firebase Indexes Setup
+
+### Required Composite Indexes
+
+When your application queries data with multiple conditions, Firebase requires composite indexes. You'll need to create these indexes in your Firebase console:
+
+#### Customer Queries Index
+**Required for**: `locationId` + `createdAt` queries
+```
+Collection: customers
+Fields:
+  - locationId (Ascending)
+  - createdAt (Descending)
+```
+
+#### Lead Queries Index
+**Required for**: `locationId` + `status` queries
+```
+Collection: leads
+Fields:
+  - locationId (Ascending)
+  - status (Ascending)
+```
+
+#### Appointment Queries Index
+**Required for**: `locationId` + `scheduledDate` queries
+```
+Collection: appointments
+Fields:
+  - locationId (Ascending)
+  - scheduledDate (Ascending)
+```
+
+### How to Create Indexes
+
+1. **Go to Firebase Console**: https://console.firebase.google.com/
+2. **Navigate to**: Firestore Database → Indexes
+3. **Click**: "Create Index"
+4. **Fill in the details**:
+   - **Collection ID**: `customers` (or `leads`, `appointments`)
+   - **Fields**: Add the required fields with their sort order
+5. **Click**: "Create Index"
+
+### Automatic Index Creation
+
+Firebase will also automatically prompt you to create indexes when your application encounters a query that needs one. You can click the link in the error message to create the index directly.
+
 ## 9. Admin Full Access Summary
 
 ### ✅ Admin Role Capabilities
