@@ -26,7 +26,8 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Fab
+  Fab,
+  Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -37,6 +38,9 @@ import {
   CalendarToday as CalendarIcon,
   AccessTime as AccessTimeIcon
 } from '@mui/icons-material';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppointments } from '../hooks/useAppointments';
 import { useCustomers } from '../hooks/useCustomers';
 import { useLeads } from '../hooks/useLeads';
