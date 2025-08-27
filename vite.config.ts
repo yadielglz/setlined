@@ -16,7 +16,6 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
     sourcemap: false,
-    minify: 'terser'
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@mui/material']
