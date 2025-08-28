@@ -4,46 +4,16 @@ import {
   CardContent,
   Box,
   Typography,
-  Chip,
   useTheme
 } from '@mui/material';
 import {
-  WbSunny as SunnyIcon,
-  Cloud as CloudIcon,
-  Grain as RainIcon,
-  AcUnit as SnowIcon,
   AccessTime as ClockIcon,
-  Today as CalendarIcon,
-  LocationOn as LocationIcon
+  Today as CalendarIcon
 } from '@mui/icons-material';
-
-interface WeatherCondition {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  bgColor: string;
-}
-
-interface WeatherData {
-  temperature: number;
-  condition: string;
-  location: string;
-  humidity: number;
-  windSpeed: number;
-}
 
 const ModernWidget: React.FC = () => {
   const theme = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(true);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
-  const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>({
-    icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-    label: 'Loading...',
-    color: '#FFA500',
-    bgColor: 'rgba(255, 165, 0, 0.1)'
-  });
 
   // Update time every second
   useEffect(() => {
@@ -53,148 +23,6 @@ const ModernWidget: React.FC = () => {
 
     return () => clearInterval(timer);
   }, []);
-
-  // Fetch real weather data
-  const fetchWeather = async (latitude: number, longitude: number) => {
-    const apiKey = import.meta.env.REACT_APP_OPENWEATHER_API_KEY;
-    if (!apiKey) {
-      setWeatherError('Weather API key not configured');
-      setWeatherLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Weather API request failed');
-      }
-
-      const data = await response.json();
-
-      const weatherData: WeatherData = {
-        temperature: Math.round(data.main.temp),
-        condition: data.weather[0].main,
-        location: data.name,
-        humidity: data.main.humidity,
-        windSpeed: Math.round(data.wind.speed)
-      };
-
-      setWeatherData(weatherData);
-      setWeatherError(null);
-    } catch (error) {
-      console.error('Error fetching weather:', error);
-      setWeatherError('Failed to load weather data');
-    } finally {
-      setWeatherLoading(false);
-    }
-  };
-
-  // Get user's location and fetch weather - only on user interaction
-  const requestLocation = () => {
-    if (navigator.geolocation) {
-      setWeatherLoading(true);
-      setWeatherError(null);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchWeather(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setWeatherError('Location access denied - using default location');
-          // Fallback to a default location (New York City)
-          fetchWeather(40.7128, -74.0060);
-        }
-      );
-    } else {
-      setWeatherError('Geolocation not supported - using default location');
-      // Fallback to a default location (New York City)
-      fetchWeather(40.7128, -74.0060);
-    }
-  };
-
-  // Try to get location on mount, but handle permission gracefully
-  useEffect(() => {
-    // Use a timeout to avoid immediate geolocation request on page load
-    const timer = setTimeout(() => {
-      requestLocation();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Update weather condition based on real weather data
-  useEffect(() => {
-    if (!weatherData) return;
-
-    const hour = currentTime.getHours();
-    let condition: WeatherCondition;
-
-    // Map OpenWeatherMap conditions to our icons and colors
-    switch (weatherData.condition.toLowerCase()) {
-      case 'clear':
-        condition = {
-          icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-          label: hour >= 6 && hour < 18 ? 'Sunny' : 'Clear Night',
-          color: '#FFA500',
-          bgColor: 'rgba(255, 165, 0, 0.15)'
-        };
-        break;
-      case 'clouds':
-        condition = {
-          icon: <CloudIcon sx={{ fontSize: 48 }} />,
-          label: 'Cloudy',
-          color: '#87CEEB',
-          bgColor: 'rgba(135, 206, 235, 0.15)'
-        };
-        break;
-      case 'rain':
-      case 'drizzle':
-        condition = {
-          icon: <RainIcon sx={{ fontSize: 48 }} />,
-          label: 'Rainy',
-          color: '#4169E1',
-          bgColor: 'rgba(65, 105, 225, 0.15)'
-        };
-        break;
-      case 'snow':
-        condition = {
-          icon: <SnowIcon sx={{ fontSize: 48 }} />,
-          label: 'Snowy',
-          color: '#F0F8FF',
-          bgColor: 'rgba(240, 248, 255, 0.15)'
-        };
-        break;
-      case 'thunderstorm':
-        condition = {
-          icon: <RainIcon sx={{ fontSize: 48 }} />,
-          label: 'Stormy',
-          color: '#4B0082',
-          bgColor: 'rgba(75, 0, 130, 0.15)'
-        };
-        break;
-      case 'mist':
-      case 'fog':
-        condition = {
-          icon: <CloudIcon sx={{ fontSize: 48 }} />,
-          label: 'Foggy',
-          color: '#A9A9A9',
-          bgColor: 'rgba(169, 169, 169, 0.15)'
-        };
-        break;
-      default:
-        condition = {
-          icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-          label: weatherData.condition,
-          color: '#FFA500',
-          bgColor: 'rgba(255, 165, 0, 0.15)'
-        };
-    }
-
-    setWeatherCondition(condition);
-  }, [weatherData, currentTime]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -241,9 +69,9 @@ const ModernWidget: React.FC = () => {
         }
       }}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 2 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <ClockIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             {getGreeting()}!
@@ -251,9 +79,9 @@ const ModernWidget: React.FC = () => {
         </Box>
 
         {/* Clock */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
           <Typography
-            variant="h2"
+            variant="h3"
             sx={{
               fontWeight: 700,
               fontFamily: 'monospace',
@@ -265,79 +93,20 @@ const ModernWidget: React.FC = () => {
             {formatTime(currentTime)}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-            <CalendarIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+            <CalendarIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 500 }}>
               {formatDate(currentTime)}
             </Typography>
           </Box>
         </Box>
 
-        {/* Weather Widget */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            p: 2,
-            borderRadius: 2,
-            background: weatherCondition.bgColor,
-            border: `1px solid ${weatherCondition.color}20`,
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box
-              sx={{
-                color: weatherCondition.color,
-                transition: 'transform 0.3s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                },
-                animation: weatherLoading ? 'none' : 'pulse 2s ease-in-out infinite'
-              }}
-            >
-              {weatherLoading ? (
-                <Typography variant="h6" sx={{ fontSize: '2rem' }}>...</Typography>
-              ) : (
-                weatherCondition.icon
-              )}
-            </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                {weatherLoading ? 'Loading...' : weatherError ? 'Weather Error' : weatherCondition.label}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" color="text.secondary">
-                  {weatherLoading ? 'Getting location...' :
-                   weatherError ? weatherError :
-                   weatherData ? weatherData.location : 'Local Weather'}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Chip
-            label={weatherLoading ? '...' :
-                   weatherError ? 'N/A' :
-                   weatherData ? `${weatherData.temperature}°F` : 'N/A'}
-            sx={{
-              bgcolor: weatherCondition.color,
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              minWidth: 60
-            }}
-          />
-        </Box>
-
         {/* Additional Info */}
-        <Box sx={{ mt: 3, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Time Zone: EST
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Updated: Live
             </Typography>
           </Box>
