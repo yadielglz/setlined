@@ -221,14 +221,26 @@ const Calendar = () => {
                      value={selectedDate}
                      onChange={handleDateChange}
                      slots={{
-                       day: (props: any) => {
-                         const { day, ...other } = props;
+                       day: ({ day, selected, today, outsideCurrentMonth, ...other }: any) => {
                          const appointmentsForDay = getAppointmentsForCalendarDate(day);
                          const hasAppointments = appointmentsForDay.length > 0;
 
                          return (
                            <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                             <div {...other} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }} />
+                             <div
+                               {...other}
+                               style={{
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 justifyContent: 'center',
+                                 width: '100%',
+                                 height: '100%',
+                                 position: 'relative',
+                                 zIndex: 1
+                               }}
+                             >
+                               {day.getDate()}
+                             </div>
                              {hasAppointments && (
                                <div
                                  style={{
@@ -239,6 +251,7 @@ const Calendar = () => {
                                    height: 6,
                                    borderRadius: '50%',
                                    backgroundColor: theme.palette.primary.main,
+                                   zIndex: 2
                                  }}
                                />
                              )}
