@@ -250,6 +250,58 @@ export interface AppointmentFilters {
    };
 }
 
+// Employee Schedule Types
+export interface ScheduleEntry {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: Date;
+  startTime: string; // HH:MM format
+  endTime: string; // HH:MM format
+  shiftType: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  locationId?: string;
+  notes?: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ScheduleForm {
+  employeeId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  shiftType: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  locationId?: string;
+  notes?: string;
+  isActive: boolean;
+}
+
+export interface ScheduleFilters {
+  employeeId?: string;
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  shiftType?: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  locationId?: string;
+}
+
+// Schedule display types for tabs
+export interface DailySchedule {
+  date: Date;
+  entries: ScheduleEntry[];
+  totalEmployees: number;
+  activeShifts: number;
+}
+
+export interface WeeklySchedule {
+  weekStart: Date;
+  weekEnd: Date;
+  dailySchedules: DailySchedule[];
+}
+
 // Store Performance Metrics
 export interface StorePerformanceMetrics {
   id: string;

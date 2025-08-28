@@ -24,6 +24,7 @@ import {
   Work as WorkIcon,
   CalendarToday as CalendarIcon,
   Assessment as AssessmentIcon,
+  Schedule as ScheduleIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -166,6 +167,12 @@ const Layout = ({ children }: LayoutProps) => {
                   <WorkIcon sx={{ mr: 1 }} />
                   Employee Management
                 </MenuItem>
+                {(userProfile?.role === 'admin' || userProfile?.role === 'manager') && (
+                  <MenuItem onClick={() => { handleClose(); navigate('/schedule-management'); }}>
+                    <ScheduleIcon sx={{ mr: 1 }} />
+                    Schedule Management
+                  </MenuItem>
+                )}
                 <MenuItem onClick={handleLogout}>
                   <LogoutIcon sx={{ mr: 1 }} />
                   Logout

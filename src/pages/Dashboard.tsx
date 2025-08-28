@@ -27,6 +27,7 @@ import { useAppointments } from '../hooks/useAppointments';
 import { useStorePerformance } from '../hooks/useStorePerformance';
 import ModernWidget from '../components/ModernWidget';
 import StorePerformanceTable from '../components/StorePerformanceTable';
+import ScheduleDisplay from '../components/ScheduleDisplay';
 import type { DashboardMetrics, ActivityItem } from '../types';
 
 const Dashboard = () => {
@@ -227,6 +228,11 @@ const Dashboard = () => {
           onDelete={deleteMetric}
           loading={performanceLoading}
         />
+      </Box>
+
+      {/* Current Schedule Section */}
+      <Box sx={{ mt: 4 }}>
+        <ScheduleDisplay />
       </Box>
 
       {/* Recent Activity and Quick Stats */}

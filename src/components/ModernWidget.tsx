@@ -92,23 +92,37 @@ const ModernWidget: React.FC = () => {
     }
   };
 
-  // Get user's location and fetch weather
-  useEffect(() => {
+  // Get user's location and fetch weather - only on user interaction
+  const requestLocation = () => {
     if (navigator.geolocation) {
+      setWeatherLoading(true);
+      setWeatherError(null);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           fetchWeather(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
           console.error('Error getting location:', error);
-          setWeatherError('Location access denied');
-          setWeatherLoading(false);
+          setWeatherError('Location access denied - using default location');
+          // Fallback to a default location (New York City)
+          fetchWeather(40.7128, -74.0060);
         }
       );
     } else {
-      setWeatherError('Geolocation not supported');
-      setWeatherLoading(false);
+      setWeatherError('Geolocation not supported - using default location');
+      // Fallback to a default location (New York City)
+      fetchWeather(40.7128, -74.0060);
     }
+  };
+
+  // Try to get location on mount, but handle permission gracefully
+  useEffect(() => {
+    // Use a timeout to avoid immediate geolocation request on page load
+    const timer = setTimeout(() => {
+      requestLocation();
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Update weather condition based on real weather data
