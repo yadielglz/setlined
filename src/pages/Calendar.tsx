@@ -27,7 +27,6 @@ import {
   CircularProgress,
   Alert,
   Fab,
-  Grid,
   useTheme
 } from '@mui/material';
 import {
@@ -84,31 +83,6 @@ const Calendar = () => {
     });
   };
 
-  // Custom day renderer for calendar to show appointment indicators
-  const renderDay = (date: Date, selectedDates: Date[], pickersDayProps: any) => {
-    const appointmentsForDay = getAppointmentsForCalendarDate(date);
-    const hasAppointments = appointmentsForDay.length > 0;
-
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <div {...pickersDayProps} />
-        {hasAppointments && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 2,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 4,
-              height: 4,
-              borderRadius: '50%',
-              backgroundColor: theme.palette.primary.main,
-            }}
-          />
-        )}
-      </div>
-    );
-  };
 
   // Filter appointments based on search and status
   const filteredAppointments = appointments.filter(appointment => {
@@ -234,251 +208,251 @@ const Calendar = () => {
           </Button>
         </Box>
 
-        <Grid container spacing={3}>
-          {/* Calendar View */}
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Calendar View
-                </Typography>
-                <Box display="flex" justifyContent="center">
-                  <DateCalendar
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    slots={{
-                      day: (props: any) => {
-                        const { day, ...other } = props;
-                        const appointmentsForDay = getAppointmentsForCalendarDate(day);
-                        const hasAppointments = appointmentsForDay.length > 0;
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+           {/* Calendar View */}
+           <Box flex={{ xs: 1, md: 2 }}>
+             <Card>
+               <CardContent>
+                 <Typography variant="h6" gutterBottom>
+                   Calendar View
+                 </Typography>
+                 <Box display="flex" justifyContent="center">
+                   <DateCalendar
+                     value={selectedDate}
+                     onChange={handleDateChange}
+                     slots={{
+                       day: (props: any) => {
+                         const { day, ...other } = props;
+                         const appointmentsForDay = getAppointmentsForCalendarDate(day);
+                         const hasAppointments = appointmentsForDay.length > 0;
 
-                        return (
-                          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                            <div {...other} />
-                            {hasAppointments && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  bottom: 2,
-                                  left: '50%',
-                                  transform: 'translateX(-50%)',
-                                  width: 4,
-                                  height: 4,
-                                  borderRadius: '50%',
-                                  backgroundColor: theme.palette.primary.main,
-                                }}
-                              />
-                            )}
-                          </div>
-                        );
-                      }
-                    }}
-                    sx={{
-                      '& .MuiPickersCalendarHeader-root': {
-                        paddingLeft: 0,
-                        paddingRight: 0,
-                      },
-                      '& .MuiDayCalendar-root': {
-                        width: '100%'
-                      }
-                    }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                         return (
+                           <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                             <div {...other} />
+                             {hasAppointments && (
+                               <div
+                                 style={{
+                                   position: 'absolute',
+                                   bottom: 2,
+                                   left: '50%',
+                                   transform: 'translateX(-50%)',
+                                   width: 4,
+                                   height: 4,
+                                   borderRadius: '50%',
+                                   backgroundColor: theme.palette.primary.main,
+                                 }}
+                               />
+                             )}
+                           </div>
+                         );
+                       }
+                     }}
+                     sx={{
+                       '& .MuiPickersCalendarHeader-root': {
+                         paddingLeft: 0,
+                         paddingRight: 0,
+                       },
+                       '& .MuiDayCalendar-root': {
+                         width: '100%'
+                       }
+                     }}
+                   />
+                 </Box>
+               </CardContent>
+             </Card>
+           </Box>
 
-          {/* Appointments for Selected Date */}
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
-                </Typography>
-                {selectedDateAppointments.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No appointments scheduled for this date.
-                  </Typography>
-                ) : (
-                  <Box>
-                    {selectedDateAppointments.map((appointment) => (
-                      <Box key={appointment.id} mb={2} p={2} border={1} borderRadius={1} borderColor="divider">
-                        <Box display="flex" justifyContent="space-between" alignItems="start">
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight="bold">
-                              {appointment.title}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {new Date(appointment.scheduledDate).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </Typography>
-                            {appointment.description && (
-                              <Typography variant="body2" color="text.secondary">
-                                {appointment.description}
-                              </Typography>
-                            )}
-                          </Box>
-                          <Box>
-                            <Chip
-                              label={appointment.status}
-                              color={getStatusColor(appointment.status)}
-                              size="small"
-                            />
-                          </Box>
-                        </Box>
-                        <Box mt={1} display="flex" gap={1}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDialog(appointment)}
-                            color="primary"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDelete(appointment.id)}
-                            color="error"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+           {/* Appointments for Selected Date */}
+           <Box flex={{ xs: 1, md: 1 }}>
+             <Card>
+               <CardContent>
+                 <Typography variant="h6" gutterBottom>
+                   {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                 </Typography>
+                 {selectedDateAppointments.length === 0 ? (
+                   <Typography variant="body2" color="text.secondary">
+                     No appointments scheduled for this date.
+                   </Typography>
+                 ) : (
+                   <Box>
+                     {selectedDateAppointments.map((appointment) => (
+                       <Box key={appointment.id} mb={2} p={2} border={1} borderRadius={1} borderColor="divider">
+                         <Box display="flex" justifyContent="space-between" alignItems="start">
+                           <Box>
+                             <Typography variant="subtitle2" fontWeight="bold">
+                               {appointment.title}
+                             </Typography>
+                             <Typography variant="body2" color="text.secondary">
+                               {new Date(appointment.scheduledDate).toLocaleTimeString([], {
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })}
+                             </Typography>
+                             {appointment.description && (
+                               <Typography variant="body2" color="text.secondary">
+                                 {appointment.description}
+                               </Typography>
+                             )}
+                           </Box>
+                           <Box>
+                             <Chip
+                               label={appointment.status}
+                               color={getStatusColor(appointment.status)}
+                               size="small"
+                             />
+                           </Box>
+                         </Box>
+                         <Box mt={1} display="flex" gap={1}>
+                           <IconButton
+                             size="small"
+                             onClick={() => handleOpenDialog(appointment)}
+                             color="primary"
+                           >
+                             <EditIcon fontSize="small" />
+                           </IconButton>
+                           <IconButton
+                             size="small"
+                             onClick={() => handleDelete(appointment.id)}
+                             color="error"
+                           >
+                             <DeleteIcon fontSize="small" />
+                           </IconButton>
+                         </Box>
+                       </Box>
+                     ))}
+                   </Box>
+                 )}
+               </CardContent>
+             </Card>
+           </Box>
+         </Box>
 
-          {/* All Appointments List */}
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    All Appointments
-                  </Typography>
-                  <Box display="flex" gap={2}>
-                    <TextField
-                      size="small"
-                      placeholder="Search appointments..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        label="Status"
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                      >
-                        <MenuItem value="all">All</MenuItem>
-                        <MenuItem value="scheduled">Scheduled</MenuItem>
-                        <MenuItem value="confirmed">Confirmed</MenuItem>
-                        <MenuItem value="completed">Completed</MenuItem>
-                        <MenuItem value="cancelled">Cancelled</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Box>
-                </Box>
+         {/* All Appointments List */}
+         <Box mt={3}>
+           <Card>
+             <CardContent>
+               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                 <Typography variant="h6">
+                   All Appointments
+                 </Typography>
+                 <Box display="flex" gap={2}>
+                   <TextField
+                     size="small"
+                     placeholder="Search appointments..."
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     InputProps={{
+                       startAdornment: (
+                         <InputAdornment position="start">
+                           <SearchIcon />
+                         </InputAdornment>
+                       ),
+                     }}
+                   />
+                   <FormControl size="small" sx={{ minWidth: 120 }}>
+                     <InputLabel>Status</InputLabel>
+                     <Select
+                       value={statusFilter}
+                       label="Status"
+                       onChange={(e) => setStatusFilter(e.target.value)}
+                     >
+                       <MenuItem value="all">All</MenuItem>
+                       <MenuItem value="scheduled">Scheduled</MenuItem>
+                       <MenuItem value="confirmed">Confirmed</MenuItem>
+                       <MenuItem value="completed">Completed</MenuItem>
+                       <MenuItem value="cancelled">Cancelled</MenuItem>
+                     </Select>
+                   </FormControl>
+                 </Box>
+               </Box>
 
-                {loading ? (
-                  <Box display="flex" justifyContent="center" p={4}>
-                    <CircularProgress color="primary" />
-                  </Box>
-                ) : error ? (
-                  <Alert severity="error">{error}</Alert>
-                ) : (
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Title</TableCell>
-                          <TableCell>Date & Time</TableCell>
-                          <TableCell>Customer</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {filteredAppointments.map((appointment) => (
-                          <TableRow key={appointment.id}>
-                            <TableCell>
-                              <Box>
-                                <Typography variant="body2" fontWeight="bold">
-                                  {appointment.title}
-                                </Typography>
-                                {appointment.description && (
-                                  <Typography variant="body2" color="text.secondary">
-                                    {appointment.description}
-                                  </Typography>
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2">
-                                {new Date(appointment.scheduledDate).toLocaleDateString()}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {new Date(appointment.scheduledDate).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              {appointment.customerId && customers.find(c => c.id === appointment.customerId) ? (
-                                <Typography variant="body2">
-                                  {customers.find(c => c.id === appointment.customerId)?.firstName} {customers.find(c => c.id === appointment.customerId)?.lastName}
-                                </Typography>
-                              ) : (
-                                <Typography variant="body2" color="text.secondary">
-                                  No customer
-                                </Typography>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={appointment.status}
-                                color={getStatusColor(appointment.status)}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleOpenDialog(appointment)}
-                                color="primary"
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDelete(appointment.id)}
-                                color="error"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+               {loading ? (
+                 <Box display="flex" justifyContent="center" p={4}>
+                   <CircularProgress color="primary" />
+                 </Box>
+               ) : error ? (
+                 <Alert severity="error">{error}</Alert>
+               ) : (
+                 <TableContainer component={Paper}>
+                   <Table>
+                     <TableHead>
+                       <TableRow>
+                         <TableCell>Title</TableCell>
+                         <TableCell>Date & Time</TableCell>
+                         <TableCell>Customer</TableCell>
+                         <TableCell>Status</TableCell>
+                         <TableCell>Actions</TableCell>
+                       </TableRow>
+                     </TableHead>
+                     <TableBody>
+                       {filteredAppointments.map((appointment) => (
+                         <TableRow key={appointment.id}>
+                           <TableCell>
+                             <Box>
+                               <Typography variant="body2" fontWeight="bold">
+                                 {appointment.title}
+                               </Typography>
+                               {appointment.description && (
+                                 <Typography variant="body2" color="text.secondary">
+                                   {appointment.description}
+                                 </Typography>
+                               )}
+                             </Box>
+                           </TableCell>
+                           <TableCell>
+                             <Typography variant="body2">
+                               {new Date(appointment.scheduledDate).toLocaleDateString()}
+                             </Typography>
+                             <Typography variant="body2" color="text.secondary">
+                               {new Date(appointment.scheduledDate).toLocaleTimeString([], {
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })}
+                             </Typography>
+                           </TableCell>
+                           <TableCell>
+                             {appointment.customerId && customers.find(c => c.id === appointment.customerId) ? (
+                               <Typography variant="body2">
+                                 {customers.find(c => c.id === appointment.customerId)?.firstName} {customers.find(c => c.id === appointment.customerId)?.lastName}
+                               </Typography>
+                             ) : (
+                               <Typography variant="body2" color="text.secondary">
+                                 No customer
+                               </Typography>
+                             )}
+                           </TableCell>
+                           <TableCell>
+                             <Chip
+                               label={appointment.status}
+                               color={getStatusColor(appointment.status)}
+                               size="small"
+                             />
+                           </TableCell>
+                           <TableCell>
+                             <IconButton
+                               size="small"
+                               onClick={() => handleOpenDialog(appointment)}
+                               color="primary"
+                             >
+                               <EditIcon fontSize="small" />
+                             </IconButton>
+                             <IconButton
+                               size="small"
+                               onClick={() => handleDelete(appointment.id)}
+                               color="error"
+                             >
+                               <DeleteIcon fontSize="small" />
+                             </IconButton>
+                           </TableCell>
+                         </TableRow>
+                       ))}
+                     </TableBody>
+                   </Table>
+                 </TableContainer>
+               )}
+             </CardContent>
+           </Card>
+         </Box>
 
         {/* Appointment Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -487,117 +461,117 @@ const Calendar = () => {
           </DialogTitle>
           <DialogContent>
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Customer</InputLabel>
-                    <Select
-                      value={formData.customerId}
-                      label="Customer"
-                      onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                    >
-                      <MenuItem value="">No customer</MenuItem>
-                      {customers.map((customer) => (
-                        <MenuItem key={customer.id} value={customer.id}>
-                          {customer.firstName} {customer.lastName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Lead</InputLabel>
-                    <Select
-                      value={formData.leadId}
-                      label="Lead"
-                      onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
-                    >
-                      <MenuItem value="">No lead</MenuItem>
-                      {leads.map((lead) => (
-                        <MenuItem key={lead.id} value={lead.id}>
-                          {getCustomerName(lead.customerId)} - {lead.source}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    multiline
-                    rows={3}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Scheduled Date & Time"
-                    type="datetime-local"
-                    value={formData.scheduledDate.slice(0, 16)}
-                    onChange={(e) => setFormData({ ...formData, scheduledDate: new Date(e.target.value).toISOString() })}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Duration (minutes)"
-                    type="number"
-                    value={formData.durationMinutes}
-                    onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) })}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={formData.status}
-                      label="Status"
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    >
-                      <MenuItem value="scheduled">Scheduled</MenuItem>
-                      <MenuItem value="confirmed">Confirmed</MenuItem>
-                      <MenuItem value="completed">Completed</MenuItem>
-                      <MenuItem value="cancelled">Cancelled</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-              </Grid>
+              <Box display="flex" flexDirection="column" gap={2}>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <Box flex={1}>
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel>Customer</InputLabel>
+                      <Select
+                        value={formData.customerId}
+                        label="Customer"
+                        onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                      >
+                        <MenuItem value="">No customer</MenuItem>
+                        {customers.map((customer) => (
+                          <MenuItem key={customer.id} value={customer.id}>
+                            {customer.firstName} {customer.lastName}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box flex={1}>
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel>Lead</InputLabel>
+                      <Select
+                        value={formData.leadId}
+                        label="Lead"
+                        onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
+                      >
+                        <MenuItem value="">No lead</MenuItem>
+                        {leads.map((lead) => (
+                          <MenuItem key={lead.id} value={lead.id}>
+                            {getCustomerName(lead.customerId)} - {lead.source}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+                <TextField
+                  fullWidth
+                  label="Title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  multiline
+                  rows={3}
+                />
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <Box flex={1}>
+                    <TextField
+                      fullWidth
+                      label="Scheduled Date & Time"
+                      type="datetime-local"
+                      value={formData.scheduledDate.slice(0, 16)}
+                      onChange={(e) => setFormData({ ...formData, scheduledDate: new Date(e.target.value).toISOString() })}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      required
+                    />
+                  </Box>
+                  <Box flex={1}>
+                    <TextField
+                      fullWidth
+                      label="Duration (minutes)"
+                      type="number"
+                      value={formData.durationMinutes}
+                      onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) })}
+                      required
+                    />
+                  </Box>
+                </Box>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <Box flex={1}>
+                    <FormControl fullWidth>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        value={formData.status}
+                        label="Status"
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      >
+                        <MenuItem value="scheduled">Scheduled</MenuItem>
+                        <MenuItem value="confirmed">Confirmed</MenuItem>
+                        <MenuItem value="completed">Completed</MenuItem>
+                        <MenuItem value="cancelled">Cancelled</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box flex={1}>
+                    <TextField
+                      fullWidth
+                      label="Location"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </Box>
+                </Box>
+                <TextField
+                  fullWidth
+                  label="Notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  multiline
+                  rows={2}
+                />
+              </Box>
             </Box>
           </DialogContent>
           <DialogActions>
