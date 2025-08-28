@@ -21,7 +21,6 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Person as PersonIcon,
-  Work as WorkIcon,
   CalendarToday as CalendarIcon,
   Assessment as AssessmentIcon,
   Schedule as ScheduleIcon,
@@ -67,11 +66,6 @@ const Layout = ({ children }: LayoutProps) => {
     { text: 'Customers', icon: <PersonIcon />, path: '/customers' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
     { text: 'Store Performance', icon: <AssessmentIcon />, path: '/store-performance' },
-    // Role-based menu items
-    ...(userProfile?.role === 'admin' || userProfile?.role === 'manager' ? [
-      { text: 'Employee Management', icon: <GroupIcon />, path: '/employee-management' },
-      { text: 'Schedule Management', icon: <ScheduleIcon />, path: '/schedule-management' },
-    ] : []),
   ];
 
   const drawer = (
@@ -169,8 +163,8 @@ const Layout = ({ children }: LayoutProps) => {
                     Role: {userProfile?.role || 'Unknown'}
                   </Typography>
                 </MenuItem>
-                <MenuItem onClick={() => { handleClose(); navigate('/employees'); }}>
-                  <WorkIcon sx={{ mr: 1 }} />
+                <MenuItem onClick={() => { handleClose(); navigate('/employee-management'); }}>
+                  <GroupIcon sx={{ mr: 1 }} />
                   Employee Management
                 </MenuItem>
                 {(userProfile?.role === 'admin' || userProfile?.role === 'manager') && (

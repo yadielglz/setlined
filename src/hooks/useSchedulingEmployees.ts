@@ -134,7 +134,7 @@ export const useSchedulingEmployees = () => {
   };
 
   // Create scheduling employee
-  const createEmployee = async (employeeData: SchedulingEmployeeForm): Promise<string> => {
+  const createEmployee = async (employeeData: SchedulingEmployeeForm): Promise<void> => {
     if (!userProfile?.locationId) {
       throw new Error('User location not found');
     }
@@ -148,8 +148,7 @@ export const useSchedulingEmployees = () => {
         updatedAt: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, 'schedulingEmployees'), docData);
-      return docRef.id;
+      await addDoc(collection(db, 'schedulingEmployees'), docData);
     } catch (err: any) {
       setError(err.message);
       console.error('Error creating scheduling employee:', err);
