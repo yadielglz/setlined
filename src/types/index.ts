@@ -122,16 +122,17 @@ export interface LeadForm {
 }
 
 export interface AppointmentForm {
-  customerId?: string;
-  leadId?: string;
-  assignedTo: string;
-  appointmentType: 'follow-up' | 'consultation' | 'sale';
-  title: string;
-  description?: string;
-  scheduledDate: string;
-  durationMinutes: number;
-  location?: string;
-  notes?: string;
+   customerId?: string;
+   leadId?: string;
+   assignedTo?: string;
+   appointmentType: 'follow-up' | 'consultation' | 'sale';
+   title: string;
+   description?: string;
+   scheduledDate: string;
+   durationMinutes: number;
+   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+   location?: string;
+   notes?: string;
 }
 
 // Dashboard metrics
