@@ -23,7 +23,7 @@ export const useSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
-  const { getEmployeeFullName } = useSchedulingEmployees();
+  const { getEmployeeFullName, employees } = useSchedulingEmployees();
 
   // Convert Firestore timestamp to Date
   const convertTimestamp = (timestamp: any): Date | undefined => {
@@ -57,7 +57,18 @@ export const useSchedule = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
+        // Resolve employee name with better fallback
+        let employeeName = 'Unknown Employee';
+        if (data.employeeId) {
+          const resolvedName = getEmployeeFullName(data.employeeId);
+          if (resolvedName !== 'Unknown Employee') {
+            employeeName = resolvedName;
+          } else if (data.employeeName) {
+            // Fallback to stored employee name if available
+            employeeName = data.employeeName;
+          }
+        }
+
         entriesData.push({
           id: doc.id,
           ...data,
@@ -113,7 +124,18 @@ export const useSchedule = () => {
       const entriesData: ScheduleEntry[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
+        // Resolve employee name with better fallback
+        let employeeName = 'Unknown Employee';
+        if (data.employeeId) {
+          const resolvedName = getEmployeeFullName(data.employeeId);
+          if (resolvedName !== 'Unknown Employee') {
+            employeeName = resolvedName;
+          } else if (data.employeeName) {
+            // Fallback to stored employee name if available
+            employeeName = data.employeeName;
+          }
+        }
+
         entriesData.push({
           id: doc.id,
           ...data,
@@ -132,7 +154,7 @@ export const useSchedule = () => {
     });
 
     return unsubscribe;
-  }, [userProfile?.locationId]);
+  }, [userProfile?.locationId, employees, getEmployeeFullName]);
 
   // Get single schedule entry
   const getScheduleEntry = async (id: string): Promise<ScheduleEntry | null> => {
@@ -142,7 +164,18 @@ export const useSchedule = () => {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
+        // Resolve employee name with better fallback
+        let employeeName = 'Unknown Employee';
+        if (data.employeeId) {
+          const resolvedName = getEmployeeFullName(data.employeeId);
+          if (resolvedName !== 'Unknown Employee') {
+            employeeName = resolvedName;
+          } else if (data.employeeName) {
+            // Fallback to stored employee name if available
+            employeeName = data.employeeName;
+          }
+        }
+
         return {
           id: docSnap.id,
           ...data,

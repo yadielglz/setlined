@@ -58,7 +58,7 @@ const ScheduleManager: React.FC = () => {
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '17:00',
-    shiftType: 'custom',
+    shiftType: 'open',
     locationId: '',
     notes: '',
     isActive: true
@@ -94,7 +94,7 @@ const ScheduleManager: React.FC = () => {
         date: new Date().toISOString().split('T')[0],
         startTime: '09:00',
         endTime: '17:00',
-        shiftType: 'custom',
+        shiftType: 'open',
         locationId: '',
         notes: '',
         isActive: true
@@ -151,10 +151,10 @@ const ScheduleManager: React.FC = () => {
 
   const getShiftTypeColor = (shiftType: string) => {
     switch (shiftType) {
-      case 'morning': return 'success';
-      case 'afternoon': return 'warning';
-      case 'evening': return 'info';
-      case 'night': return 'error';
+      case 'open': return 'success';
+      case 'close': return 'warning';
+      case 'mid': return 'info';
+      case 'mgr': return 'secondary';
       default: return 'default';
     }
   };
@@ -185,10 +185,10 @@ const ScheduleManager: React.FC = () => {
 
   // Quick schedule presets
   const quickSchedulePresets = [
-    { label: 'Morning Shift', startTime: '08:00', endTime: '16:00', shiftType: 'morning' },
-    { label: 'Afternoon Shift', startTime: '14:00', endTime: '22:00', shiftType: 'afternoon' },
-    { label: 'Night Shift', startTime: '22:00', endTime: '06:00', shiftType: 'night' },
-    { label: 'Standard Day', startTime: '09:00', endTime: '17:00', shiftType: 'custom' }
+    { label: 'Open Shift', startTime: '08:00', endTime: '16:00', shiftType: 'open' },
+    { label: 'Close Shift', startTime: '14:00', endTime: '22:00', shiftType: 'close' },
+    { label: 'Mid Shift', startTime: '12:00', endTime: '20:00', shiftType: 'mid' },
+    { label: 'Manager Shift', startTime: '09:00', endTime: '17:00', shiftType: 'mgr' }
   ];
 
   // Handle quick scheduling
@@ -522,11 +522,10 @@ const ScheduleManager: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, shiftType: e.target.value as any })}
                   required
                 >
-                  <MenuItem value="morning">Morning</MenuItem>
-                  <MenuItem value="afternoon">Afternoon</MenuItem>
-                  <MenuItem value="evening">Evening</MenuItem>
-                  <MenuItem value="night">Night</MenuItem>
-                  <MenuItem value="custom">Custom</MenuItem>
+                  <MenuItem value="open">Open</MenuItem>
+                  <MenuItem value="close">Close</MenuItem>
+                  <MenuItem value="mid">Mid</MenuItem>
+                  <MenuItem value="mgr">Manager</MenuItem>
                 </Select>
               </FormControl>
 

@@ -65,10 +65,10 @@ const ScheduleDisplay: React.FC = () => {
 
   const getShiftTypeColor = (shiftType: string) => {
     switch (shiftType) {
-      case 'morning': return 'success';
-      case 'afternoon': return 'warning';
-      case 'evening': return 'info';
-      case 'night': return 'error';
+      case 'open': return 'success';
+      case 'close': return 'warning';
+      case 'mid': return 'info';
+      case 'mgr': return 'secondary';
       default: return 'default';
     }
   };

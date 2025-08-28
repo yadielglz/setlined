@@ -286,7 +286,7 @@ export interface ScheduleEntry {
   date: Date;
   startTime: string; // HH:MM format
   endTime: string; // HH:MM format
-  shiftType: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  shiftType: 'open' | 'close' | 'mid' | 'mgr';
   locationId?: string;
   notes?: string;
   isActive: boolean;
@@ -300,7 +300,7 @@ export interface ScheduleForm {
   date: string;
   startTime: string;
   endTime: string;
-  shiftType: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  shiftType: 'open' | 'close' | 'mid' | 'mgr';
   locationId?: string;
   notes?: string;
   isActive: boolean;
@@ -312,7 +312,7 @@ export interface ScheduleFilters {
     start: Date;
     end: Date;
   };
-  shiftType?: 'morning' | 'afternoon' | 'evening' | 'night' | 'custom';
+  shiftType?: 'open' | 'close' | 'mid' | 'mgr';
   locationId?: string;
 }
 
