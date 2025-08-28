@@ -22,44 +22,44 @@ import {
   Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { useCustomers } from '../hooks/useCustomers';
-import { useLeads } from '../hooks/useLeads';
+import { useInteractions } from '../hooks/useInteractions';
 import { useAppointments } from '../hooks/useAppointments';
 import type { DashboardMetrics, ActivityItem } from '../types';
 
 const Dashboard = () => {
-  const { customers, loading: customersLoading } = useCustomers();
-  const { leads, loading: leadsLoading } = useLeads();
-  const { appointments, loading: appointmentsLoading } = useAppointments();
+   const { customers, loading: customersLoading } = useCustomers();
+   const { interactions, loading: interactionsLoading } = useInteractions();
+   const { appointments, loading: appointmentsLoading } = useAppointments();
 
-  const [metrics, setMetrics] = useState<DashboardMetrics>({
-    totalCustomers: 0,
-    activeLeads: 0,
-    upcomingAppointments: 0,
-    conversionRate: 0,
-    recentActivity: []
-  });
+   const [metrics, setMetrics] = useState<DashboardMetrics>({
+     totalCustomers: 0,
+     activeLeads: 0,
+     upcomingAppointments: 0,
+     conversionRate: 0,
+     recentActivity: []
+   });
 
-  useEffect(() => {
-    if (!customersLoading && !leadsLoading && !appointmentsLoading) {
-      // Calculate metrics
-      const totalCustomers = customers.length;
-      const activeLeads = leads.filter(lead =>
-        lead.status === 'new' || lead.status === 'contacted' || lead.status === 'qualified'
-      ).length;
+   useEffect(() => {
+     if (!customersLoading && !interactionsLoading && !appointmentsLoading) {
+       // Calculate metrics
+       const totalCustomers = customers.length;
+       const activeLeads = interactions.filter(interaction =>
+         interaction.status === 'new' || interaction.status === 'contacted' || interaction.status === 'qualified'
+       ).length;
 
-      const now = new Date();
-      const nextWeek = new Date();
-      nextWeek.setDate(now.getDate() + 7);
+       const now = new Date();
+       const nextWeek = new Date();
+       nextWeek.setDate(now.getDate() + 7);
 
-      const upcomingAppointments = appointments.filter(appointment =>
-        appointment.scheduledDate &&
-        appointment.scheduledDate >= now &&
-        appointment.scheduledDate <= nextWeek &&
-        appointment.status !== 'cancelled'
-      ).length;
+       const upcomingAppointments = appointments.filter(appointment =>
+         appointment.scheduledDate &&
+         appointment.scheduledDate >= now &&
+         appointment.scheduledDate <= nextWeek &&
+         appointment.status !== 'cancelled'
+       ).length;
 
-      const convertedLeads = leads.filter(lead => lead.status === 'converted').length;
-      const conversionRate = leads.length > 0 ? (convertedLeads / leads.length) * 100 : 0;
+       const convertedLeads = interactions.filter(interaction => interaction.status === 'converted').length;
+       const conversionRate = interactions.length > 0 ? (convertedLeads / interactions.length) * 100 : 0;
 
       // Generate recent activity (mock data for now - in real app would come from communications log)
       const recentActivity: ActivityItem[] = [
@@ -100,7 +100,7 @@ const Dashboard = () => {
         recentActivity
       });
     }
-  }, [customers, leads, appointments, customersLoading, leadsLoading, appointmentsLoading]);
+  }, [customers, interactions, appointments, customersLoading, interactionsLoading, appointmentsLoading]);
 
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {
@@ -132,7 +132,7 @@ const Dashboard = () => {
     }
   };
 
-  if (customersLoading || leadsLoading || appointmentsLoading) {
+  if (customersLoading || interactionsLoading || appointmentsLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
         <CircularProgress />
@@ -267,9 +267,9 @@ const Dashboard = () => {
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="body2">Qualified Leads</Typography>
+                <Typography variant="body2">Qualified Interactions</Typography>
                 <Typography variant="body2" color="secondary">
-                  {leads.filter(l => l.status === 'qualified').length}
+                  {interactions.filter(i => i.status === 'qualified').length}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

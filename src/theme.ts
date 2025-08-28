@@ -2,13 +2,13 @@ import { createTheme } from '@mui/material/styles';
 
 // Official T-Mobile Color Palette
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#E31837', // T-Mobile Magenta
-      light: '#FF6B7D',
-      dark: '#B01329',
-      contrastText: '#FFFFFF',
-    },
+   palette: {
+     primary: {
+       main: '#ED008C', // T-Mobile Magenta
+       light: '#FF4DA6',
+       dark: '#C00073',
+       contrastText: '#FFFFFF',
+     },
     secondary: {
       main: '#6C757D', // Cool Gray
       light: '#9CA3AF',

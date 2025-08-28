@@ -2,8 +2,9 @@ import { Routes, Route } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from './contexts/AuthContext.tsx';
 import Dashboard from './pages/Dashboard.tsx';
-import Leads from './pages/Leads.tsx';
+import Interactions from './pages/Interactions.tsx';
 import Customers from './pages/Customers.tsx';
+import Employees from './pages/Employees.tsx';
 import Calendar from './pages/Calendar.tsx';
 import Layout from './components/Layout.tsx';
 import Login from './components/Login.tsx';
@@ -34,12 +35,13 @@ const AppRoutes = () => {
     <Layout>
       <Box sx={{ flexGrow: 1, p: 3 }}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/leads" element={<Leads />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/calendar" element={<Calendar />} />
-        </Routes>
+           <Route path="/" element={<Dashboard />} />
+           <Route path="/dashboard" element={<Dashboard />} />
+           <Route path="/interactions" element={<Interactions />} />
+           <Route path="/customers" element={<Customers />} />
+           <Route path="/employees" element={<Employees />} />
+           <Route path="/calendar" element={<Calendar />} />
+         </Routes>
       </Box>
     </Layout>
   );

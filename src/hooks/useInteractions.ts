@@ -15,10 +15,10 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Lead, LeadForm, LeadFilters } from '../types';
+import type { Interaction, InteractionForm, InteractionFilters } from '../types';
 
-export const useLeads = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
+export const useInteractions = () => {
+  const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
@@ -37,8 +37,8 @@ export const useLeads = () => {
     return Timestamp.fromDate(dateObj);
   };
 
-  // Fetch all leads for user's location
-  const fetchLeads = async (filters?: LeadFilters) => {
+  // Fetch all interactions for user's location
+  const fetchInteractions = async (filters?: InteractionFilters) => {
     if (!userProfile?.locationId) return;
 
     try {
@@ -46,62 +46,62 @@ export const useLeads = () => {
       setError(null);
 
       let q = query(
-        collection(db, 'leads'),
+        collection(db, 'interactions'),
         where('locationId', '==', userProfile.locationId),
         orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
-      const leadsData: Lead[] = [];
+      const interactionsData: Interaction[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        leadsData.push({
+        interactionsData.push({
           id: doc.id,
           ...data,
           nextFollowUp: convertTimestamp(data.nextFollowUp),
           createdAt: convertTimestamp(data.createdAt),
           updatedAt: convertTimestamp(data.updatedAt),
-        } as Lead);
+        } as Interaction);
       });
 
       // Apply filters
-      let filteredLeads = leadsData;
+      let filteredInteractions = interactionsData;
       if (filters) {
         if (filters.search) {
           const searchTerm = filters.search.toLowerCase();
-          filteredLeads = filteredLeads.filter(lead =>
-            lead.notes?.toLowerCase().includes(searchTerm) ||
-            lead.source.toLowerCase().includes(searchTerm)
+          filteredInteractions = filteredInteractions.filter(interaction =>
+            interaction.notes?.toLowerCase().includes(searchTerm) ||
+            interaction.source.toLowerCase().includes(searchTerm)
           );
         }
         if (filters.status) {
-          filteredLeads = filteredLeads.filter(lead =>
-            lead.status === filters.status
+          filteredInteractions = filteredInteractions.filter(interaction =>
+            interaction.status === filters.status
           );
         }
         if (filters.priority) {
-          filteredLeads = filteredLeads.filter(lead =>
-            lead.priority === filters.priority
+          filteredInteractions = filteredInteractions.filter(interaction =>
+            interaction.priority === filters.priority
           );
         }
         if (filters.assignedTo) {
-          filteredLeads = filteredLeads.filter(lead =>
-            lead.assignedTo === filters.assignedTo
+          filteredInteractions = filteredInteractions.filter(interaction =>
+            interaction.assignedTo === filters.assignedTo
           );
         }
       }
 
-      setLeads(filteredLeads);
+      setInteractions(filteredInteractions);
     } catch (err: any) {
       setError(err.message);
-      console.error('Error fetching leads:', err);
+      console.error('Error fetching interactions:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Real-time listener for leads
+  // Real-time listener for interactions
   useEffect(() => {
     if (!userProfile?.locationId) {
       setLoading(false);
@@ -109,38 +109,38 @@ export const useLeads = () => {
     }
 
     const q = query(
-      collection(db, 'leads'),
+      collection(db, 'interactions'),
       where('locationId', '==', userProfile.locationId),
       orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const leadsData: Lead[] = [];
+      const interactionsData: Interaction[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        leadsData.push({
+        interactionsData.push({
           id: doc.id,
           ...data,
           nextFollowUp: convertTimestamp(data.nextFollowUp),
           createdAt: convertTimestamp(data.createdAt),
           updatedAt: convertTimestamp(data.updatedAt),
-        } as Lead);
+        } as Interaction);
       });
-      setLeads(leadsData);
+      setInteractions(interactionsData);
       setLoading(false);
     }, (err) => {
       setError(err.message);
-      console.error('Error in leads listener:', err);
+      console.error('Error in interactions listener:', err);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [userProfile?.locationId]);
 
-  // Get single lead
-  const getLead = async (id: string): Promise<Lead | null> => {
+  // Get single interaction
+  const getInteraction = async (id: string): Promise<Interaction | null> => {
     try {
-      const docRef = doc(db, 'leads', id);
+      const docRef = doc(db, 'interactions', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -151,149 +151,149 @@ export const useLeads = () => {
           nextFollowUp: convertTimestamp(data.nextFollowUp),
           createdAt: convertTimestamp(data.createdAt),
           updatedAt: convertTimestamp(data.updatedAt),
-        } as Lead;
+        } as Interaction;
       }
       return null;
     } catch (err: any) {
       setError(err.message);
-      console.error('Error getting lead:', err);
+      console.error('Error getting interaction:', err);
       return null;
     }
   };
 
-  // Create lead
-  const createLead = async (leadData: LeadForm): Promise<string> => {
+  // Create interaction
+  const createInteraction = async (interactionData: InteractionForm): Promise<string> => {
     if (!userProfile?.locationId) {
       throw new Error('User location not found');
     }
 
     try {
       const docData = {
-        ...leadData,
-        nextFollowUp: convertToTimestamp(leadData.nextFollowUp),
+        ...interactionData,
+        nextFollowUp: convertToTimestamp(interactionData.nextFollowUp),
         locationId: userProfile.locationId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, 'leads'), docData);
+      const docRef = await addDoc(collection(db, 'interactions'), docData);
       return docRef.id;
     } catch (err: any) {
       setError(err.message);
-      console.error('Error creating lead:', err);
+      console.error('Error creating interaction:', err);
       throw err;
     }
   };
 
-  // Update lead
-  const updateLead = async (id: string, leadData: Partial<LeadForm>): Promise<void> => {
+  // Update interaction
+  const updateInteraction = async (id: string, interactionData: Partial<InteractionForm>): Promise<void> => {
     try {
       const updateData: any = {
-        ...leadData,
+        ...interactionData,
         updatedAt: Timestamp.now(),
       };
 
-      if (leadData.nextFollowUp !== undefined) {
-        updateData.nextFollowUp = convertToTimestamp(leadData.nextFollowUp);
+      if (interactionData.nextFollowUp !== undefined) {
+        updateData.nextFollowUp = convertToTimestamp(interactionData.nextFollowUp);
       }
 
-      await updateDoc(doc(db, 'leads', id), updateData);
+      await updateDoc(doc(db, 'interactions', id), updateData);
     } catch (err: any) {
       setError(err.message);
-      console.error('Error updating lead:', err);
+      console.error('Error updating interaction:', err);
       throw err;
     }
   };
 
-  // Delete lead
-  const deleteLead = async (id: string): Promise<void> => {
+  // Delete interaction
+  const deleteInteraction = async (id: string): Promise<void> => {
     try {
-      await deleteDoc(doc(db, 'leads', id));
+      await deleteDoc(doc(db, 'interactions', id));
     } catch (err: any) {
       setError(err.message);
-      console.error('Error deleting lead:', err);
+      console.error('Error deleting interaction:', err);
       throw err;
     }
   };
 
-  // Get leads by customer
-  const getLeadsByCustomer = async (customerId: string): Promise<Lead[]> => {
+  // Get interactions by customer
+  const getInteractionsByCustomer = async (customerId: string): Promise<Interaction[]> => {
     if (!userProfile?.locationId) return [];
 
     try {
       const q = query(
-        collection(db, 'leads'),
+        collection(db, 'interactions'),
         where('customerId', '==', customerId),
         where('locationId', '==', userProfile.locationId),
         orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
-      const leadsData: Lead[] = [];
+      const interactionsData: Interaction[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        leadsData.push({
+        interactionsData.push({
           id: doc.id,
           ...data,
           nextFollowUp: convertTimestamp(data.nextFollowUp),
           createdAt: convertTimestamp(data.createdAt),
           updatedAt: convertTimestamp(data.updatedAt),
-        } as Lead);
+        } as Interaction);
       });
 
-      return leadsData;
+      return interactionsData;
     } catch (err: any) {
       setError(err.message);
-      console.error('Error getting leads by customer:', err);
+      console.error('Error getting interactions by customer:', err);
       return [];
     }
   };
 
-  // Get leads by assigned user
-  const getLeadsByAssignedUser = async (userId: string): Promise<Lead[]> => {
+  // Get interactions by assigned user
+  const getInteractionsByAssignedUser = async (userId: string): Promise<Interaction[]> => {
     if (!userProfile?.locationId) return [];
 
     try {
       const q = query(
-        collection(db, 'leads'),
+        collection(db, 'interactions'),
         where('assignedTo', '==', userId),
         where('locationId', '==', userProfile.locationId),
         orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
-      const leadsData: Lead[] = [];
+      const interactionsData: Interaction[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        leadsData.push({
+        interactionsData.push({
           id: doc.id,
           ...data,
           nextFollowUp: convertTimestamp(data.nextFollowUp),
           createdAt: convertTimestamp(data.createdAt),
           updatedAt: convertTimestamp(data.updatedAt),
-        } as Lead);
+        } as Interaction);
       });
 
-      return leadsData;
+      return interactionsData;
     } catch (err: any) {
       setError(err.message);
-      console.error('Error getting leads by assigned user:', err);
+      console.error('Error getting interactions by assigned user:', err);
       return [];
     }
   };
 
   return {
-    leads,
+    interactions,
     loading,
     error,
-    fetchLeads,
-    getLead,
-    createLead,
-    updateLead,
-    deleteLead,
-    getLeadsByCustomer,
-    getLeadsByAssignedUser,
+    fetchInteractions,
+    getInteraction,
+    createInteraction,
+    updateInteraction,
+    deleteInteraction,
+    getInteractionsByCustomer,
+    getInteractionsByAssignedUser,
   };
 };

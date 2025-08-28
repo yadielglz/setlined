@@ -21,6 +21,7 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Person as PersonIcon,
+  Work as WorkIcon,
   CalendarToday as CalendarIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
@@ -59,8 +60,9 @@ const Layout = ({ children }: LayoutProps) => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Leads', icon: <PeopleIcon />, path: '/leads' },
+    { text: 'Interactions', icon: <PeopleIcon />, path: '/interactions' },
     { text: 'Customers', icon: <PersonIcon />, path: '/customers' },
+    { text: 'Employees', icon: <WorkIcon />, path: '/employees' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
   ];
 

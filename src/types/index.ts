@@ -25,41 +25,64 @@ export interface Location {
 }
 
 export interface Customer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  dateOfBirth?: Date;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  customerType: 'new' | 'existing' | 'loyalty';
-  loyaltyPoints: number;
-  totalPurchases: number;
-  lastVisitDate?: Date;
-  createdBy: string;
-  locationId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+   id: string;
+   firstName: string;
+   lastName: string;
+   email?: string;
+   phone?: string;
+   dateOfBirth?: Date;
+   address?: {
+     street: string;
+     city: string;
+     state: string;
+     zipCode: string;
+   };
+   customerType: 'new' | 'existing' | 'loyalty';
+   loyaltyPoints: number;
+   totalPurchases: number;
+   lastVisitDate?: Date;
+   createdBy: string;
+   locationId?: string;
+   createdAt?: Date;
+   updatedAt?: Date;
 }
 
-export interface Lead {
-  id: string;
-  customerId: string;
-  assignedTo: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: 'walk-in' | 'phone' | 'website' | 'referral';
-  priority: 'low' | 'medium' | 'high';
-  estimatedValue: number;
-  notes?: string;
-  nextFollowUp?: Date;
-  locationId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+export interface Employee {
+   id: string;
+   firstName: string;
+   lastName: string;
+   email: string;
+   phone?: string;
+   employeeId: string;
+   position: string;
+   department: string;
+   hireDate: Date;
+   salary?: number;
+   status: 'active' | 'inactive' | 'on-leave';
+   managerId?: string;
+   locationId?: string;
+   createdAt?: Date;
+   updatedAt?: Date;
+}
+
+export interface Interaction {
+   id: string;
+   customerId: string;
+   assignedTo: string;
+   status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+   source: 'walk-in' | 'phone' | 'website' | 'referral';
+   priority: 'low' | 'medium' | 'high';
+   estimatedValue: number;
+   notes?: string;
+   nextFollowUp?: Date;
+   locationId?: string;
+   createdAt?: Date;
+   updatedAt?: Date;
+   // Interaction types checkboxes
+   tLife: boolean;
+   upgrade: boolean;
+   newSale: boolean;
+   appointment: boolean;
 }
 
 export interface Appointment {
@@ -96,29 +119,48 @@ export interface Communication {
 
 // Form types for creating/editing
 export interface CustomerForm {
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  dateOfBirth?: string;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  customerType: 'new' | 'existing' | 'loyalty';
+   firstName: string;
+   lastName: string;
+   email?: string;
+   phone?: string;
+   dateOfBirth?: string;
+   address?: {
+     street: string;
+     city: string;
+     state: string;
+     zipCode: string;
+   };
+   customerType: 'new' | 'existing' | 'loyalty';
 }
 
-export interface LeadForm {
-  customerId: string;
-  assignedTo: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: 'walk-in' | 'phone' | 'website' | 'referral';
-  priority: 'low' | 'medium' | 'high';
-  estimatedValue: number;
-  notes?: string;
-  nextFollowUp?: string;
+export interface EmployeeForm {
+   firstName: string;
+   lastName: string;
+   email: string;
+   phone?: string;
+   employeeId: string;
+   position: string;
+   department: string;
+   hireDate: string;
+   salary?: number;
+   status: 'active' | 'inactive' | 'on-leave';
+   managerId?: string;
+}
+
+export interface InteractionForm {
+   customerId: string;
+   assignedTo: string;
+   status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+   source: 'walk-in' | 'phone' | 'website' | 'referral';
+   priority: 'low' | 'medium' | 'high';
+   estimatedValue: number;
+   notes?: string;
+   nextFollowUp?: string;
+   // Interaction types checkboxes
+   tLife: boolean;
+   upgrade: boolean;
+   newSale: boolean;
+   appointment: boolean;
 }
 
 export interface AppointmentForm {
@@ -164,15 +206,15 @@ export interface CustomerFilters {
   };
 }
 
-export interface LeadFilters {
-  search?: string;
-  status?: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  priority?: 'low' | 'medium' | 'high';
-  assignedTo?: string;
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
+export interface InteractionFilters {
+   search?: string;
+   status?: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+   priority?: 'low' | 'medium' | 'high';
+   assignedTo?: string;
+   dateRange?: {
+     start: Date;
+     end: Date;
+   };
 }
 
 export interface AppointmentFilters {

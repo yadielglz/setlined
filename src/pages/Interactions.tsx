@@ -26,7 +26,9 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Fab
+  Fab,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,20 +37,20 @@ import {
   Delete as DeleteIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
-import { useLeads } from '../hooks/useLeads';
+import { useInteractions } from '../hooks/useInteractions';
 import { useCustomers } from '../hooks/useCustomers';
-import type { Lead, LeadForm } from '../types';
+import type { Interaction, InteractionForm } from '../types';
 
-const Leads = () => {
-  const { leads, loading, error, createLead, updateLead, deleteLead } = useLeads();
+const Interactions = () => {
+  const { interactions, loading, error, createInteraction, updateInteraction, deleteInteraction } = useInteractions();
   const { customers } = useCustomers();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [formData, setFormData] = useState<LeadForm>({
+  const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
+  const [formData, setFormData] = useState<InteractionForm>({
     customerId: '',
     assignedTo: '',
     status: 'new',
@@ -56,24 +58,28 @@ const Leads = () => {
     priority: 'medium',
     estimatedValue: 0,
     notes: '',
-    nextFollowUp: ''
+    nextFollowUp: '',
+    tLife: false,
+    upgrade: false,
+    newSale: false,
+    appointment: false
   });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // Filter leads based on search and filters
-  const filteredLeads = leads.filter(lead => {
+  // Filter interactions based on search and filters
+  const filteredInteractions = interactions.filter(interaction => {
     const matchesSearch = searchTerm === '' ||
-      lead.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.source.toLowerCase().includes(searchTerm.toLowerCase());
+      interaction.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      interaction.source.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || lead.priority === priorityFilter;
+    const matchesStatus = statusFilter === 'all' || interaction.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all' || interaction.priority === priorityFilter;
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const getStatusColor = (status: Lead['status']) => {
+  const getStatusColor = (status: Interaction['status']) => {
     switch (status) {
       case 'new': return 'default';
       case 'contacted': return 'primary';
@@ -84,7 +90,7 @@ const Leads = () => {
     }
   };
 
-  const getPriorityColor = (priority: Lead['priority']) => {
+  const getPriorityColor = (priority: Interaction['priority']) => {
     switch (priority) {
       case 'low': return 'success';
       case 'medium': return 'warning';
@@ -93,21 +99,25 @@ const Leads = () => {
     }
   };
 
-  const handleOpenDialog = (lead?: Lead) => {
-    if (lead) {
-      setEditingLead(lead);
+  const handleOpenDialog = (interaction?: Interaction) => {
+    if (interaction) {
+      setEditingInteraction(interaction);
       setFormData({
-        customerId: lead.customerId,
-        assignedTo: lead.assignedTo,
-        status: lead.status,
-        source: lead.source,
-        priority: lead.priority,
-        estimatedValue: lead.estimatedValue,
-        notes: lead.notes || '',
-        nextFollowUp: lead.nextFollowUp ? lead.nextFollowUp.toISOString().split('T')[0] : ''
+        customerId: interaction.customerId,
+        assignedTo: interaction.assignedTo,
+        status: interaction.status,
+        source: interaction.source,
+        priority: interaction.priority,
+        estimatedValue: interaction.estimatedValue,
+        notes: interaction.notes || '',
+        nextFollowUp: interaction.nextFollowUp ? interaction.nextFollowUp.toISOString().split('T')[0] : '',
+        tLife: interaction.tLife,
+        upgrade: interaction.upgrade,
+        newSale: interaction.newSale,
+        appointment: interaction.appointment
       });
     } else {
-      setEditingLead(null);
+      setEditingInteraction(null);
       setFormData({
         customerId: '',
         assignedTo: '',
@@ -116,7 +126,11 @@ const Leads = () => {
         priority: 'medium',
         estimatedValue: 0,
         notes: '',
-        nextFollowUp: ''
+        nextFollowUp: '',
+        tLife: false,
+        upgrade: false,
+        newSale: false,
+        appointment: false
       });
     }
     setDialogOpen(true);
@@ -124,7 +138,7 @@ const Leads = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setEditingLead(null);
+    setEditingInteraction(null);
     setFormError('');
   };
 
@@ -134,10 +148,10 @@ const Leads = () => {
     setFormError('');
 
     try {
-      if (editingLead) {
-        await updateLead(editingLead.id, formData);
+      if (editingInteraction) {
+        await updateInteraction(editingInteraction.id, formData);
       } else {
-        await createLead(formData);
+        await createInteraction(formData);
       }
       handleCloseDialog();
     } catch (err: any) {
@@ -148,11 +162,11 @@ const Leads = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this lead?')) {
+    if (window.confirm('Are you sure you want to delete this interaction?')) {
       try {
-        await deleteLead(id);
+        await deleteInteraction(id);
       } catch (err: any) {
-        console.error('Error deleting lead:', err);
+        console.error('Error deleting interaction:', err);
       }
     }
   };
@@ -160,6 +174,15 @@ const Leads = () => {
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     return customer ? `${customer.firstName} ${customer.lastName}` : 'Unknown Customer';
+  };
+
+  const getInteractionTypes = (interaction: Interaction) => {
+    const types = [];
+    if (interaction.tLife) types.push('T-Life');
+    if (interaction.upgrade) types.push('Upgrade');
+    if (interaction.newSale) types.push('New Sale');
+    if (interaction.appointment) types.push('Appointment');
+    return types;
   };
 
   if (loading) {
@@ -174,14 +197,14 @@ const Leads = () => {
     <div>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Leads Management
+          Customer Interactions
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
         >
-          Add Lead
+          Add Interaction
         </Button>
       </Box>
 
@@ -192,7 +215,7 @@ const Leads = () => {
         <CardContent>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <TextField
-              placeholder="Search leads..."
+              placeholder="Search interactions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -238,7 +261,7 @@ const Leads = () => {
         </CardContent>
       </Card>
 
-      {/* Leads Table */}
+      {/* Interactions Table */}
       <Card>
         <TableContainer component={Paper}>
           <Table>
@@ -248,53 +271,67 @@ const Leads = () => {
                 <TableCell>Status</TableCell>
                 <TableCell>Priority</TableCell>
                 <TableCell>Source</TableCell>
+                <TableCell>Interaction Types</TableCell>
                 <TableCell>Estimated Value</TableCell>
                 <TableCell>Next Follow-up</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredLeads.map((lead) => (
-                <TableRow key={lead.id} hover>
+              {filteredInteractions.map((interaction) => (
+                <TableRow key={interaction.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2">
-                        {getCustomerName(lead.customerId)}
+                        {getCustomerName(interaction.customerId)}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={lead.status}
-                      color={getStatusColor(lead.status)}
+                      label={interaction.status}
+                      color={getStatusColor(interaction.status)}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={lead.priority}
-                      color={getPriorityColor(lead.priority)}
+                      label={interaction.priority}
+                      color={getPriorityColor(interaction.priority)}
                       size="small"
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>{lead.source}</TableCell>
-                  <TableCell>${lead.estimatedValue.toLocaleString()}</TableCell>
+                  <TableCell>{interaction.source}</TableCell>
                   <TableCell>
-                    {lead.nextFollowUp ? lead.nextFollowUp.toLocaleDateString() : 'N/A'}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {getInteractionTypes(interaction).map((type) => (
+                        <Chip
+                          key={type}
+                          label={type}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  </TableCell>
+                  <TableCell>${interaction.estimatedValue.toLocaleString()}</TableCell>
+                  <TableCell>
+                    {interaction.nextFollowUp ? interaction.nextFollowUp.toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <IconButton
                       size="small"
-                      onClick={() => handleOpenDialog(lead)}
+                      onClick={() => handleOpenDialog(interaction)}
                       color="primary"
                     >
                       <EditIcon />
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => handleDelete(lead.id)}
+                      onClick={() => handleDelete(interaction.id)}
                       color="error"
                     >
                       <DeleteIcon />
@@ -302,11 +339,11 @@ const Leads = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredLeads.length === 0 && (
+              {filteredInteractions.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <Typography variant="body2" color="text.secondary">
-                      No leads found
+                      No interactions found
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -316,20 +353,20 @@ const Leads = () => {
         </TableContainer>
       </Card>
 
-      {/* Add Lead FAB for mobile */}
+      {/* Add Interaction FAB for mobile */}
       <Fab
         color="primary"
-        aria-label="add lead"
+        aria-label="add interaction"
         sx={{ position: 'fixed', bottom: 16, right: 16, display: { xs: 'flex', md: 'none' } }}
         onClick={() => handleOpenDialog()}
       >
         <AddIcon />
       </Fab>
 
-      {/* Add/Edit Lead Dialog */}
+      {/* Add/Edit Interaction Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingLead ? 'Edit Lead' : 'Add New Lead'}
+          {editingInteraction ? 'Edit Interaction' : 'Add New Interaction'}
         </DialogTitle>
         <DialogContent>
           {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
@@ -357,7 +394,7 @@ const Leads = () => {
                 <Select
                   value={formData.status}
                   label="Status"
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Lead['status'] })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Interaction['status'] })}
                   required
                 >
                   <MenuItem value="new">New</MenuItem>
@@ -373,7 +410,7 @@ const Leads = () => {
                 <Select
                   value={formData.priority}
                   label="Priority"
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as Lead['priority'] })}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as Interaction['priority'] })}
                   required
                 >
                   <MenuItem value="low">Low</MenuItem>
@@ -387,7 +424,7 @@ const Leads = () => {
                 <Select
                   value={formData.source}
                   label="Source"
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value as Lead['source'] })}
+                  onChange={(e) => setFormData({ ...formData, source: e.target.value as Interaction['source'] })}
                   required
                 >
                   <MenuItem value="walk-in">Walk-in</MenuItem>
@@ -416,6 +453,52 @@ const Leads = () => {
               />
             </Box>
 
+            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+              Interaction Types
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.tLife}
+                    onChange={(e) => setFormData({ ...formData, tLife: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label="T-Life"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.upgrade}
+                    onChange={(e) => setFormData({ ...formData, upgrade: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label="Upgrade"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.newSale}
+                    onChange={(e) => setFormData({ ...formData, newSale: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label="New Sale"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.appointment}
+                    onChange={(e) => setFormData({ ...formData, appointment: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label="Appointment"
+              />
+            </Box>
+
             <TextField
               label="Notes"
               multiline
@@ -434,7 +517,7 @@ const Leads = () => {
             variant="contained"
             disabled={formLoading}
           >
-            {formLoading ? <CircularProgress size={20} /> : (editingLead ? 'Update' : 'Create')}
+            {formLoading ? <CircularProgress size={20} /> : (editingInteraction ? 'Update' : 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -442,4 +525,4 @@ const Leads = () => {
   );
 };
 
-export default Leads;
+export default Interactions;

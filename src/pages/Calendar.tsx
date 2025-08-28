@@ -40,14 +40,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAppointments } from '../hooks/useAppointments';
 import { useCustomers } from '../hooks/useCustomers';
-import { useLeads } from '../hooks/useLeads';
+import { useInteractions } from '../hooks/useInteractions';
 import type { Appointment, AppointmentForm } from '../types';
 
 const Calendar = () => {
-   const theme = useTheme();
-   const { appointments, loading, error, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
-   const { customers } = useCustomers();
-   const { leads } = useLeads();
+    const theme = useTheme();
+    const { appointments, loading, error, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
+    const { customers } = useCustomers();
+    const { interactions } = useInteractions();
 
    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
    const [searchTerm, setSearchTerm] = useState('');
@@ -488,10 +488,10 @@ const Calendar = () => {
                         label="Lead"
                         onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
                       >
-                        <MenuItem value="">No lead</MenuItem>
-                        {leads.map((lead) => (
-                          <MenuItem key={lead.id} value={lead.id}>
-                            {getCustomerName(lead.customerId)} - {lead.source}
+                        <MenuItem value="">No interaction</MenuItem>
+                        {interactions.map((interaction) => (
+                          <MenuItem key={interaction.id} value={interaction.id}>
+                            {getCustomerName(interaction.customerId)} - {interaction.source}
                           </MenuItem>
                         ))}
                       </Select>
