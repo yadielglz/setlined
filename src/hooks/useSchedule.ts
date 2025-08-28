@@ -28,14 +28,25 @@ export const useSchedule = () => {
   // Convert Firestore timestamp to Date
   const convertTimestamp = (timestamp: any): Date | undefined => {
     if (!timestamp) return undefined;
-    if (timestamp.toDate) return timestamp.toDate();
+    if (timestamp.toDate) {
+      const date = timestamp.toDate();
+      // Ensure the date is treated as local time by creating a new date with local components
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
     return new Date(timestamp);
   };
 
   // Convert Date to Firestore timestamp
   const convertToTimestamp = (date: Date | string | undefined): Timestamp | null => {
     if (!date) return null;
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // Parse date string as local date (YYYY-MM-DD format)
+      const [year, month, day] = date.split('-').map(Number);
+      dateObj = new Date(year, month - 1, day); // month is 0-indexed
+    } else {
+      dateObj = date;
+    }
     return Timestamp.fromDate(dateObj);
   };
 
@@ -247,6 +258,13 @@ export const useSchedule = () => {
     }
   };
 
+  // Helper function to compare dates by local date components
+  const datesEqual = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
   // Get current week's schedule
   const getCurrentWeekSchedule = (): WeeklySchedule => {
     const today = new Date();
@@ -264,12 +282,9 @@ export const useSchedule = () => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + i);
 
-      const dayEntries = scheduleEntries.filter(entry => {
-        // Create a local date from the entry date for comparison
-        const entryLocalDate = new Date(entry.date.getFullYear(), entry.date.getMonth(), entry.date.getDate());
-        const currentLocalDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        return entryLocalDate.getTime() === currentLocalDate.getTime() && entry.isActive;
-      });
+      const dayEntries = scheduleEntries.filter(entry =>
+        datesEqual(entry.date, date) && entry.isActive
+      );
 
       dailySchedules.push({
         date,
@@ -291,12 +306,9 @@ export const useSchedule = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayEntries = scheduleEntries.filter(entry => {
-      // Create a local date from the entry date for comparison
-      const entryLocalDate = new Date(entry.date.getFullYear(), entry.date.getMonth(), entry.date.getDate());
-      const todayLocalDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return entryLocalDate.getTime() === todayLocalDate.getTime() && entry.isActive;
-    });
+    const todayEntries = scheduleEntries.filter(entry =>
+      datesEqual(entry.date, today) && entry.isActive
+    );
 
     return {
       date: today,

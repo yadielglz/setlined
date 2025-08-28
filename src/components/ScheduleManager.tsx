@@ -167,19 +167,24 @@ const ScheduleManager: React.FC = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Helper function to compare dates by local date components
+  const datesEqual = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
   // Get schedule entries for selected date
   const getScheduleEntriesForDate = (date: Date) => {
     return scheduleEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate.toDateString() === date.toDateString() && entry.isActive;
+      return datesEqual(entry.date, date) && entry.isActive;
     });
   };
 
   // Get schedule entries for calendar date (for indicators)
   const getScheduleEntriesForCalendarDate = (date: Date) => {
     return scheduleEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate.toDateString() === date.toDateString() && entry.isActive;
+      return datesEqual(entry.date, date) && entry.isActive;
     });
   };
 
