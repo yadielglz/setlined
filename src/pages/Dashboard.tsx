@@ -24,6 +24,7 @@ import {
 import { useCustomers } from '../hooks/useCustomers';
 import { useInteractions } from '../hooks/useInteractions';
 import { useAppointments } from '../hooks/useAppointments';
+import ModernWidget from '../components/ModernWidget';
 import type { DashboardMetrics, ActivityItem } from '../types';
 
 const Dashboard = () => {
@@ -145,6 +146,11 @@ const Dashboard = () => {
       <Typography variant="h4" gutterBottom>
         Dashboard
       </Typography>
+
+      {/* Modern Clock, Date & Weather Widget */}
+      <Box sx={{ mb: 4 }}>
+        <ModernWidget />
+      </Box>
 
       {/* Metrics Cards */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
