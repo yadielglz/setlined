@@ -264,9 +264,12 @@ export const useSchedule = () => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + i);
 
-      const dayEntries = scheduleEntries.filter(entry =>
-        entry.date.toDateString() === date.toDateString() && entry.isActive
-      );
+      const dayEntries = scheduleEntries.filter(entry => {
+        // Create a local date from the entry date for comparison
+        const entryLocalDate = new Date(entry.date.getFullYear(), entry.date.getMonth(), entry.date.getDate());
+        const currentLocalDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        return entryLocalDate.getTime() === currentLocalDate.getTime() && entry.isActive;
+      });
 
       dailySchedules.push({
         date,
@@ -288,9 +291,12 @@ export const useSchedule = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayEntries = scheduleEntries.filter(entry =>
-      entry.date.toDateString() === today.toDateString() && entry.isActive
-    );
+    const todayEntries = scheduleEntries.filter(entry => {
+      // Create a local date from the entry date for comparison
+      const entryLocalDate = new Date(entry.date.getFullYear(), entry.date.getMonth(), entry.date.getDate());
+      const todayLocalDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return entryLocalDate.getTime() === todayLocalDate.getTime() && entry.isActive;
+    });
 
     return {
       date: today,

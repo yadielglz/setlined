@@ -24,6 +24,7 @@ import {
 import { useCustomers } from '../hooks/useCustomers';
 import { useInteractions } from '../hooks/useInteractions';
 import { useAppointments } from '../hooks/useAppointments';
+import { useSchedule } from '../hooks/useSchedule';
 import ModernWidget from '../components/ModernWidget';
 import type { DashboardMetrics, ActivityItem } from '../types';
 
@@ -31,6 +32,7 @@ const Dashboard = () => {
     const { customers, loading: customersLoading } = useCustomers();
     const { interactions, loading: interactionsLoading } = useInteractions();
     const { appointments, loading: appointmentsLoading } = useAppointments();
+    const { getTodaySchedule } = useSchedule();
 
    const [metrics, setMetrics] = useState<DashboardMetrics>({
      totalCustomers: 0,
@@ -43,7 +45,17 @@ const Dashboard = () => {
    useEffect(() => {
      if (!customersLoading && !interactionsLoading && !appointmentsLoading) {
        // Calculate metrics
-       const totalCustomers = customers.length;
+       const today = new Date();
+       today.setHours(0, 0, 0, 0);
+       const tomorrow = new Date(today);
+       tomorrow.setDate(tomorrow.getDate() + 1);
+
+       // Total customers created today only
+       const totalCustomers = customers.filter(customer =>
+         customer.createdAt &&
+         customer.createdAt >= today &&
+         customer.createdAt < tomorrow
+       ).length;
        const activeLeads = interactions.filter(interaction =>
          interaction.status === 'new' || interaction.status === 'contacted' || interaction.status === 'qualified'
        ).length;
@@ -167,13 +179,13 @@ const Dashboard = () => {
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <PeopleIcon color="primary" sx={{ mr: 1, fontSize: 24 }} />
-              <Typography variant="subtitle1" sx={{ fontSize: '0.9rem' }}>Total Customers</Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '0.9rem' }}>Today's Customers</Typography>
             </Box>
             <Typography variant="h4" color="primary" sx={{ fontSize: '1.8rem', fontWeight: 700 }}>
               {metrics.totalCustomers}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Registered
+              Created Today
             </Typography>
           </CardContent>
         </Card>
@@ -277,39 +289,53 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
+        {/* Current Schedule */}
         <Card>
           <CardContent sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom sx={{ fontSize: '1.1rem' }}>
-              Quick Stats
+              Today's Schedule
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>New Customers (30d)</Typography>
-                <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                  {customers.filter(c =>
-                    c.createdAt && (Date.now() - c.createdAt.getTime()) < 30 * 24 * 60 * 60 * 1000
-                  ).length}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {(() => {
+                const todaySchedule = getTodaySchedule();
+                if (todaySchedule.entries.length === 0) {
+                  return (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 2 }}>
+                      No shifts scheduled for today
+                    </Typography>
+                  );
+                }
+                return todaySchedule.entries
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                  .slice(0, 4) // Show only first 4 entries to keep it compact
+                  .map((entry) => (
+                    <Box key={entry.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={entry.shiftType}
+                          size="small"
+                          color={
+                            entry.shiftType === 'open' ? 'success' :
+                            entry.shiftType === 'close' ? 'warning' :
+                            entry.shiftType === 'mgr' ? 'secondary' : 'info'
+                          }
+                          sx={{ fontSize: '0.7rem', height: 20 }}
+                        />
+                        <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                          {entry.employeeName}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {entry.startTime} - {entry.endTime}
+                      </Typography>
+                    </Box>
+                  ));
+              })()}
+              {getTodaySchedule().entries.length > 4 && (
+                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
+                  +{getTodaySchedule().entries.length - 4} more shifts
                 </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>Qualified Leads</Typography>
-                <Typography variant="body2" color="secondary" sx={{ fontWeight: 600 }}>
-                  {interactions.filter(i => i.status === 'qualified').length}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>Completed Appts</Typography>
-                <Typography variant="body2" color="success" sx={{ fontWeight: 600 }}>
-                  {appointments.filter(a => a.status === 'completed').length}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>Loyalty Members</Typography>
-                <Typography variant="body2" color="warning" sx={{ fontWeight: 600 }}>
-                  {customers.filter(c => c.customerType === 'loyalty').length}
-                </Typography>
-              </Box>
+              )}
             </Box>
           </CardContent>
         </Card>
