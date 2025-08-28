@@ -24,21 +24,32 @@ import {
   Select,
   MenuItem,
   Alert,
-  Avatar
+  Avatar,
+  Fab,
+  useTheme,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  CalendarViewWeek as WeekIcon,
+  CalendarViewMonth as MonthIcon,
+  ViewList as ListIcon,
+  Schedule as ScheduleIcon,
+  DragIndicator as DragIcon
 } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { useSchedule } from '../hooks/useSchedule';
 import { useSchedulingEmployees } from '../hooks/useSchedulingEmployees';
 import type { ScheduleEntry, ScheduleForm } from '../types';
 
 const ScheduleManager: React.FC = () => {
+  const theme = useTheme();
   const { scheduleEntries, createScheduleEntry, updateScheduleEntry, deleteScheduleEntry, loading } = useSchedule();
   const { getActiveEmployees } = useSchedulingEmployees();
 
@@ -56,6 +67,12 @@ const ScheduleManager: React.FC = () => {
   });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // New state for improved UX
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [quickScheduleOpen, setQuickScheduleOpen] = useState(false);
+  const [selectedEmployeeForQuick, setSelectedEmployeeForQuick] = useState('');
 
   const activeEmployees = getActiveEmployees();
 
@@ -152,18 +169,71 @@ const ScheduleManager: React.FC = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Get schedule entries for selected date
+  const getScheduleEntriesForDate = (date: Date) => {
+    return scheduleEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.toDateString() === date.toDateString() && entry.isActive;
+    });
+  };
+
+  // Get schedule entries for calendar date (for indicators)
+  const getScheduleEntriesForCalendarDate = (date: Date) => {
+    return scheduleEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.toDateString() === date.toDateString() && entry.isActive;
+    });
+  };
+
+  // Quick schedule presets
+  const quickSchedulePresets = [
+    { label: 'Morning Shift', startTime: '08:00', endTime: '16:00', shiftType: 'morning' },
+    { label: 'Afternoon Shift', startTime: '14:00', endTime: '22:00', shiftType: 'afternoon' },
+    { label: 'Night Shift', startTime: '22:00', endTime: '06:00', shiftType: 'night' },
+    { label: 'Standard Day', startTime: '09:00', endTime: '17:00', shiftType: 'custom' }
+  ];
+
+  // Handle quick scheduling
+  const handleQuickSchedule = async (preset: typeof quickSchedulePresets[0]) => {
+    if (!selectedEmployeeForQuick || !selectedDate) return;
+
+    try {
+      await createScheduleEntry({
+        employeeId: selectedEmployeeForQuick,
+        date: selectedDate.toISOString().split('T')[0],
+        startTime: preset.startTime,
+        endTime: preset.endTime,
+        shiftType: preset.shiftType as any,
+        locationId: '',
+        notes: `Quick scheduled: ${preset.label}`,
+        isActive: true
+      });
+      setQuickScheduleOpen(false);
+      setSelectedEmployeeForQuick('');
+    } catch (error) {
+      console.error('Error quick scheduling:', error);
+    }
+  };
+
   const sortedEntries = [...scheduleEntries].sort((a, b) => {
     const dateCompare = a.date.getTime() - b.date.getTime();
     if (dateCompare !== 0) return dateCompare;
     return a.startTime.localeCompare(b.startTime);
   });
 
+  const selectedDateEntries = selectedDate ? getScheduleEntriesForDate(selectedDate) : [];
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5">Schedule Management</Typography>
+      <Box>
+        {/* Header with View Toggle */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4">Schedule Management</Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Tabs value={viewMode} onChange={(_, newValue) => setViewMode(newValue)}>
+              <Tab icon={<MonthIcon />} label="Calendar" value="calendar" />
+              <Tab icon={<ListIcon />} label="List" value="list" />
+            </Tabs>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -172,94 +242,218 @@ const ScheduleManager: React.FC = () => {
               Add Schedule Entry
             </Button>
           </Box>
+        </Box>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Shift</TableCell>
-                  <TableCell>Time</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      Loading schedule entries...
-                    </TableCell>
-                  </TableRow>
-                ) : sortedEntries.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      No schedule entries found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedEntries.map((entry) => (
-                    <TableRow key={entry.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Avatar sx={{ mr: 2, bgcolor: 'primary.main', width: 32, height: 32 }}>
-                            <PersonIcon sx={{ fontSize: 16 }} />
-                          </Avatar>
-                          <Typography variant="body2">{entry.employeeName}</Typography>
+        {viewMode === 'calendar' ? (
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+            {/* Calendar View */}
+            <Box sx={{ flex: { xs: 1, md: 2 } }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Calendar View
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <DateCalendar
+                      value={selectedDate}
+                      onChange={(date) => setSelectedDate(date)}
+                      slots={{
+                        day: (props: any) => {
+                          const { day, ...other } = props;
+                          const entriesForDay = getScheduleEntriesForCalendarDate(day);
+                          const hasEntries = entriesForDay.length > 0;
+
+                          return (
+                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                              <div {...other} />
+                              {hasEntries && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: 2,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    backgroundColor: theme.palette.primary.main,
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        }
+                      }}
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+
+            {/* Schedule for Selected Date */}
+            <Box sx={{ flex: { xs: 1, md: 1 } }}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">
+                      {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                    </Typography>
+                    <Button
+                      size="small"
+                      startIcon={<ScheduleIcon />}
+                      onClick={() => setQuickScheduleOpen(true)}
+                      disabled={!selectedDate}
+                    >
+                      Quick Schedule
+                    </Button>
+                  </Box>
+
+                  {selectedDateEntries.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No shifts scheduled for this date.
+                    </Typography>
+                  ) : (
+                    <Box>
+                      {selectedDateEntries.map((entry) => (
+                        <Box key={entry.id} sx={{ mb: 2, p: 2, border: 1, borderRadius: 1, borderColor: 'divider' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {entry.employeeName}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
+                              </Typography>
+                              {entry.notes && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {entry.notes}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Box>
+                              <Chip
+                                label={entry.shiftType}
+                                size="small"
+                                color={getShiftTypeColor(entry.shiftType)}
+                              />
+                            </Box>
+                          </Box>
+                          <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenDialog(entry)}
+                              color="primary"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(entry.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {entry.date.toLocaleDateString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={entry.shiftType}
-                          size="small"
-                          color={getShiftTypeColor(entry.shiftType)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={entry.isActive ? 'Active' : 'Inactive'}
-                          size="small"
-                          color={entry.isActive ? 'success' : 'error'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDialog(entry)}
-                            color="primary"
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDelete(entry.id)}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        ) : (
+          /* List View (Original Table) */
+          <Card>
+            <CardContent>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Employee</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Shift</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          Loading schedule entries...
+                        </TableCell>
+                      </TableRow>
+                    ) : sortedEntries.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          No schedule entries found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedEntries.map((entry) => (
+                        <TableRow key={entry.id} hover>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar sx={{ mr: 2, bgcolor: 'primary.main', width: 32, height: 32 }}>
+                                <PersonIcon sx={{ fontSize: 16 }} />
+                              </Avatar>
+                              <Typography variant="body2">{entry.employeeName}</Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {entry.date.toLocaleDateString()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={entry.shiftType}
+                              size="small"
+                              color={getShiftTypeColor(entry.shiftType)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={entry.isActive ? 'Active' : 'Inactive'}
+                              size="small"
+                              color={entry.isActive ? 'success' : 'error'}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenDialog(entry)}
+                                color="primary"
+                              >
+                                <EditIcon />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(entry.id)}
+                                color="error"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -386,7 +580,70 @@ const ScheduleManager: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </LocalizationProvider>
+
+      {/* Quick Schedule Dialog */}
+      <Dialog open={quickScheduleOpen} onClose={() => setQuickScheduleOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Quick Schedule</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select an employee and choose a shift preset for {selectedDate?.toLocaleDateString()}
+          </Typography>
+
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Employee</InputLabel>
+            <Select
+              value={selectedEmployeeForQuick}
+              label="Employee"
+              onChange={(e) => setSelectedEmployeeForQuick(e.target.value)}
+            >
+              {activeEmployees.map((employee) => (
+                <MenuItem key={employee.id} value={employee.id}>
+                  {`${employee.firstName} ${employee.lastName}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>Shift Presets:</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {quickSchedulePresets.map((preset) => (
+              <Button
+                key={preset.label}
+                variant="outlined"
+                onClick={() => handleQuickSchedule(preset)}
+                disabled={!selectedEmployeeForQuick}
+                sx={{ justifyContent: 'flex-start' }}
+              >
+                <Box sx={{ textAlign: 'left' }}>
+                  <Typography variant="body2" fontWeight="bold">{preset.label}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatTime(preset.startTime)} - {formatTime(preset.endTime)}
+                  </Typography>
+                </Box>
+              </Button>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQuickScheduleOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="quick schedule"
+        onClick={() => setQuickScheduleOpen(true)}
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16
+        }}
+      >
+        <ScheduleIcon />
+      </Fab>
+    </Box>
+  </LocalizationProvider>
   );
 };
 
