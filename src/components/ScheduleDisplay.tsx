@@ -22,7 +22,6 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material';
 import { useSchedule } from '../hooks/useSchedule';
-import type { DailySchedule } from '../types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -52,7 +51,7 @@ const ScheduleDisplay: React.FC = () => {
 
   const weeklySchedule = getCurrentWeekSchedule();
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 

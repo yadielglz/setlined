@@ -24,20 +24,14 @@ import {
   Select,
   MenuItem,
   Alert,
-  Fab,
-  Avatar,
-  InputAdornment
+  Avatar
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Person as PersonIcon,
-  Schedule as ScheduleIcon,
-  LocationOn as LocationIcon
+  Person as PersonIcon
 } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useSchedule } from '../hooks/useSchedule';
@@ -139,10 +133,6 @@ const ScheduleManager: React.FC = () => {
     }
   };
 
-  const getEmployeeName = (employeeId: string) => {
-    const user = users.find(u => u.uid === employeeId);
-    return user ? user.displayName : 'Unknown Employee';
-  };
 
   const getShiftTypeColor = (shiftType: string) => {
     switch (shiftType) {

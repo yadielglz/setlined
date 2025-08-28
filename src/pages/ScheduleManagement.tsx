@@ -1,5 +1,4 @@
-import React from 'react';
-import { Typography, Box, Paper } from '@mui/material';
+import { Typography, Paper } from '@mui/material';
 import ScheduleManager from '../components/ScheduleManager';
 
 const ScheduleManagement = () => {
