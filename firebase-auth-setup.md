@@ -113,6 +113,30 @@ service cloud.firestore {
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
          request.auth.uid == resource.data.userId);
     }
+
+    // Interactions access - users can read all interactions from their location, admins have full access
+    // Users can write interactions they own, managers/admins can write any interaction from their location
+    match /interactions/{interactionId} {
+      allow read: if request.auth != null &&
+        request.auth.token.email_verified == true &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+         resource.data.locationId);
+      allow write: if request.auth != null &&
+        request.auth.token.email_verified == true &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.uid == resource.data.assignedTo ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId == resource.data.locationId);
+    }
+
+    // Employees access - only admins and managers can access employee data
+    match /employees/{employeeId} {
+      allow read, write: if request.auth != null &&
+        request.auth.token.email_verified == true &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
+    }
   }
 }
 ```

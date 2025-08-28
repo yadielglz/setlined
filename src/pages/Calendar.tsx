@@ -56,7 +56,7 @@ const Calendar = () => {
    const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
    const [formData, setFormData] = useState<AppointmentForm>({
      customerId: '',
-     leadId: '',
+     interactionId: '',
      title: '',
      description: '',
      scheduledDate: new Date().toISOString(),
@@ -104,7 +104,7 @@ const Calendar = () => {
       setEditingAppointment(appointment);
       setFormData({
         customerId: appointment.customerId || '',
-        leadId: appointment.leadId || '',
+        interactionId: appointment.interactionId || '',
         title: appointment.title,
         description: appointment.description || '',
         scheduledDate: appointment.scheduledDate.toISOString(),
@@ -118,7 +118,7 @@ const Calendar = () => {
       setEditingAppointment(null);
       setFormData({
         customerId: '',
-        leadId: '',
+        interactionId: '',
         title: '',
         description: '',
         scheduledDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
@@ -137,7 +137,7 @@ const Calendar = () => {
     setEditingAppointment(null);
     setFormData({
       customerId: '',
-      leadId: '',
+      interactionId: '',
       title: '',
       description: '',
       scheduledDate: new Date().toISOString(),
@@ -482,11 +482,11 @@ const Calendar = () => {
                   </Box>
                   <Box flex={1}>
                     <FormControl fullWidth margin="normal">
-                      <InputLabel>Lead</InputLabel>
+                      <InputLabel>Interaction</InputLabel>
                       <Select
-                        value={formData.leadId}
-                        label="Lead"
-                        onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
+                        value={formData.interactionId}
+                        label="Interaction"
+                        onChange={(e) => setFormData({ ...formData, interactionId: e.target.value })}
                       >
                         <MenuItem value="">No interaction</MenuItem>
                         {interactions.map((interaction) => (

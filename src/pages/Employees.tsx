@@ -30,19 +30,25 @@ import {
   Avatar
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Work as WorkIcon
+   Add as AddIcon,
+   Search as SearchIcon,
+   Edit as EditIcon,
+   Delete as DeleteIcon,
+   Phone as PhoneIcon,
+   Email as EmailIcon,
+   Work as WorkIcon,
+   PowerSettingsNew as PowerIcon
 } from '@mui/icons-material';
 import { useEmployees } from '../hooks/useEmployees';
+import { useAuth } from '../contexts/AuthContext';
 import type { Employee, EmployeeForm } from '../types';
 
 const Employees = () => {
-  const { employees, loading, error, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
+   const { employees, loading, error, createEmployee, updateEmployee, deleteEmployee, toggleEmployeeStatus } = useEmployees();
+   const { userProfile } = useAuth();
+
+   // Check if user has admin/manager privileges
+   const canManageEmployees = userProfile?.role === 'admin' || userProfile?.role === 'manager';
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -156,6 +162,19 @@ const Employees = () => {
     }
   };
 
+  const handleToggleStatus = async (employee: Employee) => {
+    if (!canManageEmployees) return;
+
+    const action = employee.status === 'active' ? 'disable' : 'enable';
+    if (window.confirm(`Are you sure you want to ${action} this employee account?`)) {
+      try {
+        await toggleEmployeeStatus(employee.id, employee.status);
+      } catch (err: any) {
+        console.error('Error toggling employee status:', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
@@ -170,16 +189,24 @@ const Employees = () => {
         <Typography variant="h4" gutterBottom>
           Employee Management
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Employee
-        </Button>
+        {canManageEmployees && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Employee
+          </Button>
+        )}
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {!canManageEmployees && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          You need Admin or Manager privileges to manage employee accounts.
+        </Alert>
+      )}
 
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
@@ -292,13 +319,25 @@ const Employees = () => {
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(employee.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                    {canManageEmployees && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleToggleStatus(employee)}
+                        color={employee.status === 'active' ? 'warning' : 'success'}
+                        title={employee.status === 'active' ? 'Disable Account' : 'Enable Account'}
+                      >
+                        <PowerIcon />
+                      </IconButton>
+                    )}
+                    {canManageEmployees && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(employee.id)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

@@ -86,21 +86,21 @@ export interface Interaction {
 }
 
 export interface Appointment {
-  id: string;
-  customerId?: string;
-  leadId?: string;
-  assignedTo: string;
-  appointmentType: 'follow-up' | 'consultation' | 'sale';
-  title: string;
-  description?: string;
-  scheduledDate: Date;
-  durationMinutes: number;
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
-  location?: string;
-  notes?: string;
-  locationId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+   id: string;
+   customerId?: string;
+   interactionId?: string;
+   assignedTo: string;
+   appointmentType: 'follow-up' | 'consultation' | 'sale';
+   title: string;
+   description?: string;
+   scheduledDate: Date;
+   durationMinutes: number;
+   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+   location?: string;
+   notes?: string;
+   locationId?: string;
+   createdAt?: Date;
+   updatedAt?: Date;
 }
 
 export interface Communication {
@@ -164,17 +164,17 @@ export interface InteractionForm {
 }
 
 export interface AppointmentForm {
-   customerId?: string;
-   leadId?: string;
-   assignedTo?: string;
-   appointmentType: 'follow-up' | 'consultation' | 'sale';
-   title: string;
-   description?: string;
-   scheduledDate: string;
-   durationMinutes: number;
-   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
-   location?: string;
-   notes?: string;
+    customerId?: string;
+    interactionId?: string;
+    assignedTo?: string;
+    appointmentType: 'follow-up' | 'consultation' | 'sale';
+    title: string;
+    description?: string;
+    scheduledDate: string;
+    durationMinutes: number;
+    status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+    location?: string;
+    notes?: string;
 }
 
 // Dashboard metrics

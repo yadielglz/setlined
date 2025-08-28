@@ -228,14 +228,14 @@ const Dashboard = () => {
                     <ListItemText
                       primary={activity.title}
                       secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
+                        <>
+                          <Typography variant="body2" color="text.secondary" component="span" display="block">
                             {activity.description}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" component="span" display="block">
                             {activity.timestamp.toLocaleString()} • {activity.userName}
                           </Typography>
-                        </Box>
+                        </>
                       }
                     />
                     <Chip

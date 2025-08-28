@@ -129,9 +129,16 @@ export const useInteractions = () => {
       setInteractions(interactionsData);
       setLoading(false);
     }, (err) => {
-      setError(err.message);
-      console.error('Error in interactions listener:', err);
-      setLoading(false);
+      // If collection doesn't exist or permissions issue, set empty array
+      if (err.code === 'permission-denied' || err.code === 'not-found') {
+        setInteractions([]);
+        setError(null); // Don't show error for missing collection
+        setLoading(false);
+      } else {
+        console.error('Error in interactions listener:', err);
+        setError(err.message);
+        setLoading(false);
+      }
     });
 
     return unsubscribe;

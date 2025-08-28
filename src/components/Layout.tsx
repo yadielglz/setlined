@@ -62,7 +62,6 @@ const Layout = ({ children }: LayoutProps) => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Interactions', icon: <PeopleIcon />, path: '/interactions' },
     { text: 'Customers', icon: <PersonIcon />, path: '/customers' },
-    { text: 'Employees', icon: <WorkIcon />, path: '/employees' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
   ];
 
@@ -160,6 +159,10 @@ const Layout = ({ children }: LayoutProps) => {
                   <Typography variant="body2" color="text.secondary">
                     Role: {userProfile?.role || 'Unknown'}
                   </Typography>
+                </MenuItem>
+                <MenuItem onClick={() => { handleClose(); navigate('/employees'); }}>
+                  <WorkIcon sx={{ mr: 1 }} />
+                  Employee Management
                 </MenuItem>
                 <MenuItem onClick={handleLogout}>
                   <LogoutIcon sx={{ mr: 1 }} />
