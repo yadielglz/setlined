@@ -35,11 +35,9 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
-  CalendarViewWeek as WeekIcon,
   CalendarViewMonth as MonthIcon,
   ViewList as ListIcon,
-  Schedule as ScheduleIcon,
-  DragIndicator as DragIcon
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
