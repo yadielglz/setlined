@@ -52,6 +52,7 @@ const Interactions = () => {
   const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
   const [formData, setFormData] = useState<InteractionForm>({
     customerId: '',
+    customerName: '',
     assignedTo: '',
     status: 'new',
     source: 'walk-in',
@@ -103,7 +104,8 @@ const Interactions = () => {
     if (interaction) {
       setEditingInteraction(interaction);
       setFormData({
-        customerId: interaction.customerId,
+        customerId: interaction.customerId || '',
+        customerName: interaction.customerName || '',
         assignedTo: interaction.assignedTo,
         status: interaction.status,
         source: interaction.source,
@@ -120,6 +122,7 @@ const Interactions = () => {
       setEditingInteraction(null);
       setFormData({
         customerId: '',
+        customerName: '',
         assignedTo: '',
         status: 'new',
         source: 'walk-in',
@@ -139,6 +142,21 @@ const Interactions = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingInteraction(null);
+    setFormData({
+      customerId: '',
+      customerName: '',
+      assignedTo: '',
+      status: 'new',
+      source: 'walk-in',
+      priority: 'medium',
+      estimatedValue: 0,
+      notes: '',
+      nextFollowUp: '',
+      tLife: false,
+      upgrade: false,
+      newSale: false,
+      appointment: false
+    });
     setFormError('');
   };
 
@@ -148,6 +166,11 @@ const Interactions = () => {
     setFormError('');
 
     try {
+      // Validation: Either customerId or customerName must be provided
+      if (!formData.customerId && (!formData.customerName || !formData.customerName.trim())) {
+        throw new Error('Please select a customer or enter a customer name');
+      }
+
       if (editingInteraction) {
         await updateInteraction(editingInteraction.id, formData);
       } else {
@@ -171,9 +194,17 @@ const Interactions = () => {
     }
   };
 
-  const getCustomerName = (customerId: string) => {
-    const customer = customers.find(c => c.id === customerId);
-    return customer ? `${customer.firstName} ${customer.lastName}` : 'Unknown Customer';
+  const getCustomerName = (interaction: Interaction) => {
+    // If we have a customerName from the interaction, use it
+    if (interaction.customerName) {
+      return interaction.customerName;
+    }
+    // Otherwise, try to find the customer by ID
+    if (interaction.customerId) {
+      const customer = customers.find(c => c.id === interaction.customerId);
+      return customer ? `${customer.firstName} ${customer.lastName}` : 'Unknown Customer';
+    }
+    return 'No customer specified';
   };
 
   const getInteractionTypes = (interaction: Interaction) => {
@@ -284,7 +315,7 @@ const Interactions = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2">
-                        {getCustomerName(interaction.customerId)}
+                        {getCustomerName(interaction)}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -374,13 +405,13 @@ const Interactions = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               <FormControl fullWidth sx={{ minWidth: 200 }}>
-                <InputLabel>Customer</InputLabel>
+                <InputLabel>Customer (Optional)</InputLabel>
                 <Select
                   value={formData.customerId}
-                  label="Customer"
+                  label="Customer (Optional)"
                   onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  required
                 >
+                  <MenuItem value="">No saved customer</MenuItem>
                   {customers.map((customer) => (
                     <MenuItem key={customer.id} value={customer.id}>
                       {customer.firstName} {customer.lastName}
@@ -388,6 +419,16 @@ const Interactions = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              <TextField
+                fullWidth
+                label="Customer Name"
+                value={formData.customerName}
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                placeholder="Enter customer name (if no saved customer selected)"
+                sx={{ minWidth: 200 }}
+                helperText="Required if no customer is selected above"
+              />
 
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>Status</InputLabel>

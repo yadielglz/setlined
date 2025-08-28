@@ -227,17 +227,16 @@ const Calendar = () => {
                          const hasAppointments = appointmentsForDay.length > 0;
 
                          return (
-                           <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                             <div {...other} />
+                           <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                             <div {...other} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }} />
                              {hasAppointments && (
                                <div
                                  style={{
                                    position: 'absolute',
                                    bottom: 2,
-                                   left: '50%',
-                                   transform: 'translateX(-50%)',
-                                   width: 4,
-                                   height: 4,
+                                   right: 2,
+                                   width: 6,
+                                   height: 6,
                                    borderRadius: '50%',
                                    backgroundColor: theme.palette.primary.main,
                                  }}

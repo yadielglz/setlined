@@ -236,60 +236,8 @@ const Dashboard = () => {
         </Card>
       </Box>
 
-      {/* Compact Activity & Stats Section */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr',
-          md: '2fr 1fr'
-        },
-        gap: 2,
-        mt: 2
-      }}>
-        {/* Recent Activity */}
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontSize: '1.1rem' }}>
-              Recent Activity
-            </Typography>
-            <List dense>
-              {metrics.recentActivity.slice(0, 3).map((activity, index) => (
-                <React.Fragment key={activity.id}>
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemAvatar sx={{ minWidth: 40 }}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: `${getActivityColor(activity.type)}.main` }}>
-                        {getActivityIcon(activity.type)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={<Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 500 }}>{activity.title}</Typography>}
-                      secondary={
-                        <>
-                          <Typography variant="caption" color="text.secondary" component="span" display="block">
-                            {activity.description}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" component="span" display="block">
-                            {activity.timestamp.toLocaleString()} • {activity.userName}
-                          </Typography>
-                        </>
-                      }
-                    />
-                    <Chip
-                      label={activity.type.replace('_', ' ')}
-                      size="small"
-                      color={getActivityColor(activity.type)}
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                  </ListItem>
-                  {index < Math.min(metrics.recentActivity.length, 3) - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-
-        {/* Current Schedule */}
+      {/* Today's Schedule - Full Width */}
+      <Box sx={{ mt: 2 }}>
         <Card>
           <CardContent sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom sx={{ fontSize: '1.1rem' }}>
@@ -307,7 +255,6 @@ const Dashboard = () => {
                 }
                 return todaySchedule.entries
                   .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                  .slice(0, 4) // Show only first 4 entries to keep it compact
                   .map((entry) => (
                     <Box key={entry.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -331,11 +278,6 @@ const Dashboard = () => {
                     </Box>
                   ));
               })()}
-              {getTodaySchedule().entries.length > 4 && (
-                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
-                  +{getTodaySchedule().entries.length - 4} more shifts
-                </Typography>
-              )}
             </Box>
           </CardContent>
         </Card>

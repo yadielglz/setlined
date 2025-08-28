@@ -267,15 +267,14 @@ const ScheduleManager: React.FC = () => {
                           const hasEntries = entriesForDay.length > 0;
 
                           return (
-                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                              <div {...other} />
+                            <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div {...other} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }} />
                               {hasEntries && (
                                 <div
                                   style={{
                                     position: 'absolute',
                                     bottom: 2,
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
+                                    right: 2,
                                     width: 6,
                                     height: 6,
                                     borderRadius: '50%',

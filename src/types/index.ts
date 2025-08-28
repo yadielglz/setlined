@@ -90,7 +90,8 @@ export interface AppUserForm {
 
 export interface Interaction {
    id: string;
-   customerId: string;
+   customerId?: string; // Made optional to allow name-only interactions
+   customerName?: string; // New field for name input when no saved customer
    assignedTo: string;
    status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
    source: 'walk-in' | 'phone' | 'website' | 'referral';
@@ -171,7 +172,8 @@ export interface EmployeeForm {
 }
 
 export interface InteractionForm {
-   customerId: string;
+   customerId?: string; // Made optional to allow name-only interactions
+   customerName?: string; // New field for name input when no saved customer
    assignedTo: string;
    status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
    source: 'walk-in' | 'phone' | 'website' | 'referral';
