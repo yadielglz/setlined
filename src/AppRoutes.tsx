@@ -6,6 +6,7 @@ import Interactions from './pages/Interactions.tsx';
 import Customers from './pages/Customers.tsx';
 import Employees from './pages/Employees.tsx';
 import Calendar from './pages/Calendar.tsx';
+import StorePerformance from './pages/StorePerformance.tsx';
 import Layout from './components/Layout.tsx';
 import Login from './components/Login.tsx';
 
@@ -41,6 +42,7 @@ const AppRoutes = () => {
            <Route path="/customers" element={<Customers />} />
            <Route path="/employees" element={<Employees />} />
            <Route path="/calendar" element={<Calendar />} />
+           <Route path="/store-performance" element={<StorePerformance />} />
          </Routes>
       </Box>
     </Layout>

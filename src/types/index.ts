@@ -241,11 +241,35 @@ export interface InteractionFilters {
 }
 
 export interface AppointmentFilters {
-  search?: string;
-  status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
-  assignedTo?: string;
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
+   search?: string;
+   status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+   assignedTo?: string;
+   dateRange?: {
+     start: Date;
+     end: Date;
+   };
+}
+
+// Store Performance Metrics
+export interface StorePerformanceMetrics {
+  id: string;
+  date: Date;
+  voiceLines: number; // Voice Lines (qty)
+  bts: number; // BTS (qty)
+  t4b: number; // T4B (qty)
+  acc: number; // Acc (dollar amount)
+  hint: number; // HINT (qty)
+  locationId?: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StorePerformanceForm {
+  date: string;
+  voiceLines: number;
+  bts: number;
+  t4b: number;
+  acc: number;
+  hint: number;
 }

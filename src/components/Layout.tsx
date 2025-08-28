@@ -23,6 +23,7 @@ import {
   Person as PersonIcon,
   Work as WorkIcon,
   CalendarToday as CalendarIcon,
+  Assessment as AssessmentIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -63,6 +64,7 @@ const Layout = ({ children }: LayoutProps) => {
     { text: 'Interactions', icon: <PeopleIcon />, path: '/interactions' },
     { text: 'Customers', icon: <PersonIcon />, path: '/customers' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
+    { text: 'Store Performance', icon: <AssessmentIcon />, path: '/store-performance' },
   ];
 
   const drawer = (

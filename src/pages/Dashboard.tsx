@@ -24,13 +24,16 @@ import {
 import { useCustomers } from '../hooks/useCustomers';
 import { useInteractions } from '../hooks/useInteractions';
 import { useAppointments } from '../hooks/useAppointments';
+import { useStorePerformance } from '../hooks/useStorePerformance';
 import ModernWidget from '../components/ModernWidget';
+import StorePerformanceTable from '../components/StorePerformanceTable';
 import type { DashboardMetrics, ActivityItem } from '../types';
 
 const Dashboard = () => {
-   const { customers, loading: customersLoading } = useCustomers();
-   const { interactions, loading: interactionsLoading } = useInteractions();
-   const { appointments, loading: appointmentsLoading } = useAppointments();
+    const { customers, loading: customersLoading } = useCustomers();
+    const { interactions, loading: interactionsLoading } = useInteractions();
+    const { appointments, loading: appointmentsLoading } = useAppointments();
+    const { metrics: performanceMetrics, createMetric, updateMetric, deleteMetric, loading: performanceLoading } = useStorePerformance();
 
    const [metrics, setMetrics] = useState<DashboardMetrics>({
      totalCustomers: 0,
@@ -213,6 +216,17 @@ const Dashboard = () => {
             </Typography>
           </CardContent>
         </Card>
+      </Box>
+
+      {/* Store Performance Section */}
+      <Box sx={{ mt: 4 }}>
+        <StorePerformanceTable
+          metrics={performanceMetrics}
+          onAdd={createMetric}
+          onUpdate={updateMetric}
+          onDelete={deleteMetric}
+          loading={performanceLoading}
+        />
       </Box>
 
       {/* Recent Activity and Quick Stats */}

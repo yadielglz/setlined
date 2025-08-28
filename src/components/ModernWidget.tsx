@@ -12,8 +12,6 @@ import {
   Cloud as CloudIcon,
   Grain as RainIcon,
   AcUnit as SnowIcon,
-  WbTwilight as TwilightIcon,
-  NightsStay as NightIcon,
   AccessTime as ClockIcon,
   Today as CalendarIcon,
   LocationOn as LocationIcon
@@ -26,12 +24,23 @@ interface WeatherCondition {
   bgColor: string;
 }
 
+interface WeatherData {
+  temperature: number;
+  condition: string;
+  location: string;
+  humidity: number;
+  windSpeed: number;
+}
+
 const ModernWidget: React.FC = () => {
   const theme = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
   const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>({
     icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-    label: 'Sunny',
+    label: 'Loading...',
     color: '#FFA500',
     bgColor: 'rgba(255, 165, 0, 0.1)'
   });
@@ -45,113 +54,139 @@ const ModernWidget: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Simulate weather changes based on time of day and season
+  // Fetch real weather data
+  const fetchWeather = async (latitude: number, longitude: number) => {
+    const apiKey = import.meta.env.REACT_APP_OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      setWeatherError('Weather API key not configured');
+      setWeatherLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Weather API request failed');
+      }
+
+      const data = await response.json();
+
+      const weatherData: WeatherData = {
+        temperature: Math.round(data.main.temp),
+        condition: data.weather[0].main,
+        location: data.name,
+        humidity: data.main.humidity,
+        windSpeed: Math.round(data.wind.speed)
+      };
+
+      setWeatherData(weatherData);
+      setWeatherError(null);
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      setWeatherError('Failed to load weather data');
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  // Get user's location and fetch weather
   useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchWeather(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setWeatherError('Location access denied');
+          setWeatherLoading(false);
+        }
+      );
+    } else {
+      setWeatherError('Geolocation not supported');
+      setWeatherLoading(false);
+    }
+  }, []);
+
+  // Update weather condition based on real weather data
+  useEffect(() => {
+    if (!weatherData) return;
+
     const hour = currentTime.getHours();
-    const month = currentTime.getMonth();
-
-    // Seasonal weather patterns
-    const isWinter = month >= 11 || month <= 2;
-    const isSummer = month >= 6 && month <= 8;
-
-    // Time-based weather simulation
     let condition: WeatherCondition;
 
-    if (hour >= 6 && hour < 12) {
-      // Morning
-      if (isSummer) {
+    // Map OpenWeatherMap conditions to our icons and colors
+    switch (weatherData.condition.toLowerCase()) {
+      case 'clear':
         condition = {
           icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-          label: 'Sunny Morning',
+          label: hour >= 6 && hour < 18 ? 'Sunny' : 'Clear Night',
           color: '#FFA500',
           bgColor: 'rgba(255, 165, 0, 0.15)'
         };
-      } else if (isWinter) {
+        break;
+      case 'clouds':
         condition = {
           icon: <CloudIcon sx={{ fontSize: 48 }} />,
-          label: 'Cloudy Morning',
+          label: 'Cloudy',
           color: '#87CEEB',
           bgColor: 'rgba(135, 206, 235, 0.15)'
         };
-      } else {
+        break;
+      case 'rain':
+      case 'drizzle':
         condition = {
-          icon: <TwilightIcon sx={{ fontSize: 48 }} />,
-          label: 'Pleasant Morning',
-          color: '#98FB98',
-          bgColor: 'rgba(152, 251, 152, 0.15)'
+          icon: <RainIcon sx={{ fontSize: 48 }} />,
+          label: 'Rainy',
+          color: '#4169E1',
+          bgColor: 'rgba(65, 105, 225, 0.15)'
         };
-      }
-    } else if (hour >= 12 && hour < 18) {
-      // Afternoon
-      if (isSummer) {
+        break;
+      case 'snow':
         condition = {
-          icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-          label: 'Hot & Sunny',
-          color: '#FF6347',
-          bgColor: 'rgba(255, 99, 71, 0.15)'
+          icon: <SnowIcon sx={{ fontSize: 48 }} />,
+          label: 'Snowy',
+          color: '#F0F8FF',
+          bgColor: 'rgba(240, 248, 255, 0.15)'
         };
-      } else if (isWinter) {
+        break;
+      case 'thunderstorm':
+        condition = {
+          icon: <RainIcon sx={{ fontSize: 48 }} />,
+          label: 'Stormy',
+          color: '#4B0082',
+          bgColor: 'rgba(75, 0, 130, 0.15)'
+        };
+        break;
+      case 'mist':
+      case 'fog':
         condition = {
           icon: <CloudIcon sx={{ fontSize: 48 }} />,
-          label: 'Cool Afternoon',
-          color: '#4682B4',
-          bgColor: 'rgba(70, 130, 180, 0.15)'
+          label: 'Foggy',
+          color: '#A9A9A9',
+          bgColor: 'rgba(169, 169, 169, 0.15)'
         };
-      } else {
+        break;
+      default:
         condition = {
           icon: <SunnyIcon sx={{ fontSize: 48 }} />,
-          label: 'Warm Afternoon',
-          color: '#FFD700',
-          bgColor: 'rgba(255, 215, 0, 0.15)'
+          label: weatherData.condition,
+          color: '#FFA500',
+          bgColor: 'rgba(255, 165, 0, 0.15)'
         };
-      }
-    } else if (hour >= 18 && hour < 22) {
-      // Evening
-      condition = {
-        icon: <TwilightIcon sx={{ fontSize: 48 }} />,
-        label: 'Beautiful Evening',
-        color: '#FF69B4',
-        bgColor: 'rgba(255, 105, 180, 0.15)'
-      };
-    } else {
-      // Night
-      condition = {
-        icon: <NightIcon sx={{ fontSize: 48 }} />,
-        label: 'Peaceful Night',
-        color: '#4B0082',
-        bgColor: 'rgba(75, 0, 130, 0.15)'
-      };
-    }
-
-    // Random weather events (simulated)
-    const randomEvent = Math.random();
-    if (randomEvent < 0.1 && (hour >= 8 && hour <= 20)) {
-      // 10% chance of rain during daytime
-      condition = {
-        icon: <RainIcon sx={{ fontSize: 48 }} />,
-        label: 'Light Rain',
-        color: '#4169E1',
-        bgColor: 'rgba(65, 105, 225, 0.15)'
-      };
-    } else if (randomEvent < 0.05 && isWinter) {
-      // 5% chance of snow in winter
-      condition = {
-        icon: <SnowIcon sx={{ fontSize: 48 }} />,
-        label: 'Snowy',
-        color: '#F0F8FF',
-        bgColor: 'rgba(240, 248, 255, 0.15)'
-      };
     }
 
     setWeatherCondition(condition);
-  }, [currentTime]);
+  }, [weatherData, currentTime]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour12: true,
       hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+      minute: '2-digit'
     });
   };
 
@@ -244,26 +279,34 @@ const ModernWidget: React.FC = () => {
                 '&:hover': {
                   transform: 'scale(1.1)',
                 },
-                animation: 'pulse 2s ease-in-out infinite'
+                animation: weatherLoading ? 'none' : 'pulse 2s ease-in-out infinite'
               }}
             >
-              {weatherCondition.icon}
+              {weatherLoading ? (
+                <Typography variant="h6" sx={{ fontSize: '2rem' }}>...</Typography>
+              ) : (
+                weatherCondition.icon
+              )}
             </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                {weatherCondition.label}
+                {weatherLoading ? 'Loading...' : weatherError ? 'Weather Error' : weatherCondition.label}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                 <Typography variant="body2" color="text.secondary">
-                  Local Weather
+                  {weatherLoading ? 'Getting location...' :
+                   weatherError ? weatherError :
+                   weatherData ? weatherData.location : 'Local Weather'}
                 </Typography>
               </Box>
             </Box>
           </Box>
 
           <Chip
-            label={`${Math.floor(Math.random() * 20) + 60}°F`}
+            label={weatherLoading ? '...' :
+                   weatherError ? 'N/A' :
+                   weatherData ? `${weatherData.temperature}°F` : 'N/A'}
             sx={{
               bgcolor: weatherCondition.color,
               color: 'white',
