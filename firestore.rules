@@ -2,8 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Users can read and write their own profile
+    // Admins can read/write all user profiles
+    // Managers can read/write user profiles in their location
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null &&
+        request.auth.token.email_verified == true &&
+        (request.auth.uid == userId ||  // Users can access their own profile
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||  // Admins can access all profiles
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' &&  // Managers can access profiles in their location
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
+          get(/databases/$(database)/documents/users/$(userId)).data.locationId));
     }
 
     // Location-based access control
