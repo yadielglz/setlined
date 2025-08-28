@@ -48,21 +48,44 @@ export interface Customer {
 }
 
 export interface Employee {
-   id: string;
-   firstName: string;
-   lastName: string;
-   email: string;
-   phone?: string;
-   employeeId: string;
-   position: string;
-   department: string;
-   hireDate: Date;
-   salary?: number;
-   status: 'active' | 'inactive' | 'on-leave';
-   managerId?: string;
-   locationId?: string;
-   createdAt?: Date;
-   updatedAt?: Date;
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    employeeId: string;
+    position: string;
+    department: string;
+    hireDate: Date;
+    salary?: number;
+    status: 'active' | 'inactive' | 'on-leave';
+    managerId?: string;
+    locationId?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+// App User Management (Firebase Auth users)
+export interface AppUser {
+    uid: string;
+    email: string;
+    displayName: string;
+    role: 'rep' | 'manager' | 'admin';
+    locationId?: string;
+    isActive: boolean;
+    emailVerified: boolean;
+    lastSignIn?: Date;
+    createdAt: Date;
+    updatedAt?: Date;
+}
+
+export interface AppUserForm {
+    email: string;
+    displayName: string;
+    role: 'rep' | 'manager' | 'admin';
+    locationId?: string;
+    isActive: boolean;
+    password?: string; // Only for creation
 }
 
 export interface Interaction {

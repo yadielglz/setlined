@@ -39,89 +39,72 @@ import {
    Work as WorkIcon,
    PowerSettingsNew as PowerIcon
 } from '@mui/icons-material';
-import { useEmployees } from '../hooks/useEmployees';
+import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../contexts/AuthContext';
-import type { Employee, EmployeeForm } from '../types';
+import type { AppUser, AppUserForm } from '../types';
 
 const Employees = () => {
-   const { employees, loading, error, createEmployee, updateEmployee, deleteEmployee, toggleEmployeeStatus } = useEmployees();
-   const { userProfile } = useAuth();
+    const { users, loading, error, createUser, updateUser, deleteAppUser, toggleUserStatus, resetUserPassword } = useUsers();
+    const { userProfile } = useAuth();
 
-   // Check if user has admin/manager privileges
-   const canManageEmployees = userProfile?.role === 'admin' || userProfile?.role === 'manager';
+    // Check if user has admin/manager privileges
+    const canManageEmployees = userProfile?.role === 'admin' || userProfile?.role === 'manager';
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [formData, setFormData] = useState<EmployeeForm>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    employeeId: '',
-    position: '',
-    department: '',
-    hireDate: '',
-    salary: 0,
-    status: 'active'
-  });
+   const [searchTerm, setSearchTerm] = useState('');
+   const [statusFilter, setStatusFilter] = useState<string>('all');
+   const [dialogOpen, setDialogOpen] = useState(false);
+   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+   const [formData, setFormData] = useState<AppUserForm>({
+     email: '',
+     displayName: '',
+     role: 'rep',
+     locationId: '',
+     isActive: true,
+     password: ''
+   });
 
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // Filter employees based on search and filters
-  const filteredEmployees = employees.filter(employee => {
-    const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
+  // Filter users based on search and filters
+  const filteredUsers = users.filter(user => {
+    const displayName = user.displayName.toLowerCase();
     const matchesSearch = searchTerm === '' ||
-      fullName.includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.position.toLowerCase().includes(searchTerm.toLowerCase());
+      displayName.includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || employee.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'active' && user.isActive) ||
+      (statusFilter === 'inactive' && !user.isActive);
 
     return matchesSearch && matchesStatus;
   });
 
-  const getEmployeeStatusColor = (status: Employee['status']) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'inactive': return 'error';
-      case 'on-leave': return 'warning';
-      default: return 'default';
-    }
+  const getUserStatusColor = (isActive: boolean) => {
+    return isActive ? 'success' : 'error';
   };
 
-  const handleOpenDialog = (employee?: Employee) => {
-    if (employee) {
-      setEditingEmployee(employee);
+  const handleOpenDialog = (user?: AppUser) => {
+    if (user) {
+      setEditingUser(user);
       setFormData({
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        email: employee.email,
-        phone: employee.phone || '',
-        employeeId: employee.employeeId,
-        position: employee.position,
-        department: employee.department,
-        hireDate: employee.hireDate.toISOString().split('T')[0],
-        salary: employee.salary || 0,
-        status: employee.status,
-        managerId: employee.managerId || ''
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        locationId: user.locationId || '',
+        isActive: user.isActive
+        // Note: password is not included for editing
       });
     } else {
-      setEditingEmployee(null);
+      setEditingUser(null);
       setFormData({
-        firstName: '',
-        lastName: '',
         email: '',
-        phone: '',
-        employeeId: '',
-        position: '',
-        department: '',
-        hireDate: '',
-        salary: 0,
-        status: 'active'
+        displayName: '',
+        role: 'rep',
+        locationId: '',
+        isActive: true,
+        password: ''
       });
     }
     setDialogOpen(true);
@@ -129,7 +112,7 @@ const Employees = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setEditingEmployee(null);
+    setEditingUser(null);
     setFormError('');
   };
 
@@ -139,10 +122,19 @@ const Employees = () => {
     setFormError('');
 
     try {
-      if (editingEmployee) {
-        await updateEmployee(editingEmployee.id, formData);
+      if (editingUser) {
+        await updateUser(editingUser.uid, {
+          email: formData.email,
+          displayName: formData.displayName,
+          role: formData.role,
+          locationId: formData.locationId,
+          isActive: formData.isActive
+        });
       } else {
-        await createEmployee(formData);
+        if (!formData.password) {
+          throw new Error('Password is required for new users');
+        }
+        await createUser(formData);
       }
       handleCloseDialog();
     } catch (err: any) {
@@ -152,25 +144,37 @@ const Employees = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
+  const handleDelete = async (uid: string) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
-        await deleteEmployee(id);
+        await deleteAppUser(uid);
       } catch (err: any) {
-        console.error('Error deleting employee:', err);
+        console.error('Error deleting user:', err);
       }
     }
   };
 
-  const handleToggleStatus = async (employee: Employee) => {
+  const handleToggleStatus = async (user: AppUser) => {
     if (!canManageEmployees) return;
 
-    const action = employee.status === 'active' ? 'disable' : 'enable';
-    if (window.confirm(`Are you sure you want to ${action} this employee account?`)) {
+    const action = user.isActive ? 'disable' : 'enable';
+    if (window.confirm(`Are you sure you want to ${action} this user account?`)) {
       try {
-        await toggleEmployeeStatus(employee.id, employee.status);
+        await toggleUserStatus(user.uid, user.isActive);
       } catch (err: any) {
-        console.error('Error toggling employee status:', err);
+        console.error('Error toggling user status:', err);
+      }
+    }
+  };
+
+  const handleResetPassword = async (email: string) => {
+    if (window.confirm(`Send password reset email to ${email}?`)) {
+      try {
+        await resetUserPassword(email);
+        alert('Password reset email sent successfully!');
+      } catch (err: any) {
+        console.error('Error sending password reset:', err);
+        alert('Error sending password reset email');
       }
     }
   };
@@ -187,7 +191,7 @@ const Employees = () => {
     <div>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Employee Management
+          User Management
         </Typography>
         {canManageEmployees && (
           <Button
@@ -195,7 +199,7 @@ const Employees = () => {
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
           >
-            Add Employee
+            Add User
           </Button>
         )}
       </Box>
@@ -204,7 +208,7 @@ const Employees = () => {
 
       {!canManageEmployees && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          You need Admin or Manager privileges to manage employee accounts.
+          You need Admin or Manager privileges to manage user accounts.
         </Alert>
       )}
 
@@ -236,7 +240,6 @@ const Employees = () => {
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="on-leave">On Leave</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -249,91 +252,104 @@ const Employees = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Employee</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Position</TableCell>
-                <TableCell>Department</TableCell>
-                <TableCell>Hire Date</TableCell>
+                <TableCell>User</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Location</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Created</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredEmployees.map((employee) => (
-                <TableRow key={employee.id} hover>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.uid} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
-                        {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
+                        {user.displayName.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box>
                         <Typography variant="body1" fontWeight="medium">
-                          {employee.firstName} {employee.lastName}
+                          {user.displayName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          ID: {employee.employeeId}
+                          UID: {user.uid.substring(0, 8)}...
                         </Typography>
                       </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <EmailIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                        <Typography variant="body2">{employee.email}</Typography>
-                      </Box>
-                      {employee.phone && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <PhoneIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">{employee.phone}</Typography>
-                        </Box>
-                      )}
                     </Box>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <WorkIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2">{employee.position}</Typography>
+                      <EmailIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="body2">{user.email}</Typography>
                     </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{employee.department}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {employee.hireDate.toLocaleDateString()}
-                    </Typography>
+                    {user.emailVerified && (
+                      <Chip
+                        label="Verified"
+                        size="small"
+                        color="success"
+                        sx={{ mt: 0.5, fontSize: '0.7rem', height: 20 }}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={employee.status}
-                      color={getEmployeeStatusColor(employee.status)}
+                      label={user.role}
+                      color={user.role === 'admin' ? 'error' : user.role === 'manager' ? 'warning' : 'default'}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
+                    <Typography variant="body2">
+                      {user.locationId || 'No Location'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.isActive ? 'Active' : 'Inactive'}
+                      color={getUserStatusColor(user.isActive)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {user.createdAt.toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
                     <IconButton
                       size="small"
-                      onClick={() => handleOpenDialog(employee)}
+                      onClick={() => handleOpenDialog(user)}
                       color="primary"
+                      title="Edit User"
                     >
                       <EditIcon />
                     </IconButton>
                     {canManageEmployees && (
                       <IconButton
                         size="small"
-                        onClick={() => handleToggleStatus(employee)}
-                        color={employee.status === 'active' ? 'warning' : 'success'}
-                        title={employee.status === 'active' ? 'Disable Account' : 'Enable Account'}
+                        onClick={() => handleToggleStatus(user)}
+                        color={user.isActive ? 'warning' : 'success'}
+                        title={user.isActive ? 'Disable Account' : 'Enable Account'}
                       >
                         <PowerIcon />
                       </IconButton>
                     )}
+                    <IconButton
+                      size="small"
+                      onClick={() => handleResetPassword(user.email)}
+                      color="info"
+                      title="Send Password Reset"
+                    >
+                      <EmailIcon />
+                    </IconButton>
                     {canManageEmployees && (
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(employee.id)}
+                        onClick={() => handleDelete(user.uid)}
                         color="error"
+                        title="Delete User"
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -341,11 +357,11 @@ const Employees = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredEmployees.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     <Typography variant="body2" color="text.secondary">
-                      No employees found
+                      No users found
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -355,20 +371,20 @@ const Employees = () => {
         </TableContainer>
       </Card>
 
-      {/* Add Employee FAB for mobile */}
+      {/* Add User FAB for mobile */}
       <Fab
         color="primary"
-        aria-label="add employee"
+        aria-label="add user"
         sx={{ position: 'fixed', bottom: 16, right: 16, display: { xs: 'flex', md: 'none' } }}
         onClick={() => handleOpenDialog()}
       >
         <AddIcon />
       </Fab>
 
-      {/* Add/Edit Employee Dialog */}
+      {/* Add/Edit User Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+          {editingUser ? 'Edit User' : 'Add New User'}
         </DialogTitle>
         <DialogContent>
           {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
@@ -376,90 +392,70 @@ const Employees = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               <TextField
-                label="First Name"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                sx={{ minWidth: 200 }}
-                required
-              />
-
-              <TextField
-                label="Last Name"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                sx={{ minWidth: 200 }}
-                required
-              />
-
-              <TextField
                 label="Email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 sx={{ minWidth: 250 }}
                 required
+                fullWidth
               />
 
               <TextField
-                label="Phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                sx={{ minWidth: 200 }}
-              />
-
-              <TextField
-                label="Employee ID"
-                value={formData.employeeId}
-                onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                sx={{ minWidth: 150 }}
-                required
-              />
-
-              <TextField
-                label="Position"
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                label="Display Name"
+                value={formData.displayName}
+                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                 sx={{ minWidth: 200 }}
                 required
+                fullWidth
               />
 
+              {!editingUser && (
+                <TextField
+                  label="Password"
+                  type="password"
+                  value={formData.password || ''}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  sx={{ minWidth: 200 }}
+                  required={!editingUser}
+                  fullWidth
+                  helperText="Minimum 8 characters with uppercase, lowercase, number, and special character"
+                />
+              )}
+
+              <FormControl sx={{ minWidth: 150 }} fullWidth>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  value={formData.role}
+                  label="Role"
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'rep' | 'manager' | 'admin' })}
+                  required
+                >
+                  <MenuItem value="rep">Representative</MenuItem>
+                  <MenuItem value="manager">Manager</MenuItem>
+                  <MenuItem value="admin">Administrator</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
-                label="Department"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                label="Location ID (Optional)"
+                value={formData.locationId || ''}
+                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 sx={{ minWidth: 200 }}
-                required
+                fullWidth
+                helperText="Leave empty for no location assignment"
               />
 
-              <TextField
-                label="Hire Date"
-                type="date"
-                value={formData.hireDate}
-                onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-                sx={{ minWidth: 200 }}
-                required
-              />
-
-              <TextField
-                label="Salary"
-                type="number"
-                value={formData.salary}
-                onChange={(e) => setFormData({ ...formData, salary: parseFloat(e.target.value) || 0 })}
-                sx={{ minWidth: 150 }}
-              />
-
-              <FormControl sx={{ minWidth: 150 }}>
+              <FormControl sx={{ minWidth: 150 }} fullWidth>
                 <InputLabel>Status</InputLabel>
                 <Select
-                  value={formData.status}
+                  value={formData.isActive ? 'active' : 'inactive'}
                   label="Status"
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Employee['status'] })}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
                   required
                 >
                   <MenuItem value="active">Active</MenuItem>
                   <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="on-leave">On Leave</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -472,7 +468,7 @@ const Employees = () => {
             variant="contained"
             disabled={formLoading}
           >
-            {formLoading ? <CircularProgress size={20} /> : (editingEmployee ? 'Update' : 'Create')}
+            {formLoading ? <CircularProgress size={20} /> : (editingUser ? 'Update' : 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
