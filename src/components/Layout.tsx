@@ -25,6 +25,7 @@ import {
   CalendarToday as CalendarIcon,
   Assessment as AssessmentIcon,
   Schedule as ScheduleIcon,
+  Group as GroupIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -66,6 +67,11 @@ const Layout = ({ children }: LayoutProps) => {
     { text: 'Customers', icon: <PersonIcon />, path: '/customers' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
     { text: 'Store Performance', icon: <AssessmentIcon />, path: '/store-performance' },
+    // Role-based menu items
+    ...(userProfile?.role === 'admin' || userProfile?.role === 'manager' ? [
+      { text: 'Employee Management', icon: <GroupIcon />, path: '/employee-management' },
+      { text: 'Schedule Management', icon: <ScheduleIcon />, path: '/schedule-management' },
+    ] : []),
   ];
 
   const drawer = (
