@@ -30,14 +30,12 @@ import {
   Avatar
 } from '@mui/material';
 import {
-   Add as AddIcon,
-   Search as SearchIcon,
-   Edit as EditIcon,
-   Delete as DeleteIcon,
-   Phone as PhoneIcon,
-   Email as EmailIcon,
-   Work as WorkIcon,
-   PowerSettingsNew as PowerIcon
+    Add as AddIcon,
+    Search as SearchIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Email as EmailIcon,
+    PowerSettingsNew as PowerIcon
 } from '@mui/icons-material';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../contexts/AuthContext';

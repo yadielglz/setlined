@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
-  updateEmail,
   sendPasswordResetEmail,
-  deleteUser,
 } from 'firebase/auth';
-import type { User as FirebaseUser } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -15,19 +12,16 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  where,
   orderBy,
   Timestamp
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { useAuth } from '../contexts/AuthContext';
 import type { AppUser, AppUserForm } from '../types';
 
 export const useUsers = () => {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { userProfile } = useAuth();
 
   // Convert Firestore timestamp to Date
   const convertTimestamp = (timestamp: any): Date | undefined => {
