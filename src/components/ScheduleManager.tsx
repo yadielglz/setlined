@@ -261,14 +261,26 @@ const ScheduleManager: React.FC = () => {
                       value={selectedDate}
                       onChange={(date) => setSelectedDate(date)}
                       slots={{
-                        day: (props: any) => {
-                          const { day, ...other } = props;
+                        day: ({ day, selected, today, outsideCurrentMonth, ...other }: any) => {
                           const entriesForDay = getScheduleEntriesForCalendarDate(day);
                           const hasEntries = entriesForDay.length > 0;
 
                           return (
                             <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <div {...other} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }} />
+                              <div
+                                {...other}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '100%',
+                                  height: '100%',
+                                  position: 'relative',
+                                  zIndex: 1
+                                }}
+                              >
+                                {day.getDate()}
+                              </div>
                               {hasEntries && (
                                 <div
                                   style={{
@@ -279,6 +291,7 @@ const ScheduleManager: React.FC = () => {
                                     height: 6,
                                     borderRadius: '50%',
                                     backgroundColor: theme.palette.primary.main,
+                                    zIndex: 2
                                   }}
                                 />
                               )}
