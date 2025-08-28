@@ -26,6 +26,7 @@ import {
   Schedule as ScheduleIcon,
   Group as GroupIcon,
   Logout as LogoutIcon,
+  ManageAccounts as ManageAccountsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -162,6 +163,10 @@ const Layout = ({ children }: LayoutProps) => {
                   <Typography variant="body2" color="text.secondary">
                     Role: {userProfile?.role || 'Unknown'}
                   </Typography>
+                </MenuItem>
+                <MenuItem onClick={() => { handleClose(); navigate('/employees'); }}>
+                  <ManageAccountsIcon sx={{ mr: 1 }} />
+                  User Management
                 </MenuItem>
                 <MenuItem onClick={() => { handleClose(); navigate('/employee-management'); }}>
                   <GroupIcon sx={{ mr: 1 }} />
