@@ -1,121 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own profile
-    // Admins can read/write all user profiles
-    // Managers can read/write user profiles in their location
+    // Allow authenticated users to read and write their own profile
     match /users/{userId} {
-      allow read, write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (request.auth.uid == userId ||  // Users can access their own profile
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||  // Admins can access all profiles
-         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' &&  // Managers can access profiles in their location
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-          get(/databases/$(database)/documents/users/$(userId)).data.locationId));
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Location-based access control
+    // Allow all authenticated users to read locations
     match /locations/{locationId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth != null;
     }
 
-    // Customers access - users can only access customers from their location, admins have full access
+    // Allow authenticated users to read/write customers, leads, appointments, communications, interactions
     match /customers/{customerId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
+      allow read, write: if request.auth != null;
     }
 
-    // Leads access - users can read all leads from their location, admins have full access
-    // Users can write leads they own, managers/admins can write any lead from their location
     match /leads/{leadId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         request.auth.uid == resource.data.assignedTo ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId == resource.data.locationId);
+      allow read, write: if request.auth != null;
     }
 
-    // Appointments access - users can read appointments from their location, admins have full access
     match /appointments/{appointmentId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         request.auth.uid == resource.data.assignedTo ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
+      allow read, write: if request.auth != null;
     }
 
-    // Communications access - users can read communications from their location, admins have full access
     match /communications/{communicationId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         request.auth.uid == resource.data.userId);
+      allow read, write: if request.auth != null;
     }
 
-    // Interactions access - users can read all interactions from their location, admins have full access
-    // Users can write interactions they own, managers/admins can write any interaction from their location
     match /interactions/{interactionId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         request.auth.uid == resource.data.assignedTo ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId == resource.data.locationId);
+      allow read, write: if request.auth != null;
     }
 
-    // Employees access - only admins and managers can access employee data
+    // Allow authenticated users to read/write employees
     match /employees/{employeeId} {
-      allow read, write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
+      allow read, write: if request.auth != null;
     }
 
-    // Store Performance access - users can read/write performance data from their location
-    // Only admins and managers can write performance data
+    // Allow authenticated users to read/write store performance data
     match /storePerformance/{metricId} {
-      allow read: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-         resource.data.locationId);
-      allow write: if request.auth != null &&
-        request.auth.token.email_verified == true &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager') &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.locationId ==
-        resource.data.locationId;
+      allow read, write: if request.auth != null;
     }
   }
 }
