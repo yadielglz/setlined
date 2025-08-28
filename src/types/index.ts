@@ -250,6 +250,34 @@ export interface AppointmentFilters {
    };
 }
 
+// Scheduling Employee Types (separate from user management)
+export interface SchedulingEmployee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  position: string;
+  department: string;
+  locationId?: string;
+  isActive: boolean;
+  hireDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SchedulingEmployeeForm {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  position: string;
+  department: string;
+  locationId?: string;
+  isActive: boolean;
+  hireDate: string;
+}
+
 // Employee Schedule Types
 export interface ScheduleEntry {
   id: string;

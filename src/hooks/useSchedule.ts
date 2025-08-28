@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSchedulingEmployees } from './useSchedulingEmployees';
 import type { ScheduleEntry, ScheduleForm, ScheduleFilters, DailySchedule, WeeklySchedule } from '../types';
 
 export const useSchedule = () => {
@@ -22,6 +23,7 @@ export const useSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
+  const { getEmployeeFullName } = useSchedulingEmployees();
 
   // Convert Firestore timestamp to Date
   const convertTimestamp = (timestamp: any): Date | undefined => {
@@ -55,9 +57,11 @@ export const useSchedule = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
         entriesData.push({
           id: doc.id,
           ...data,
+          employeeName,
           date: convertTimestamp(data.date) || new Date(),
           createdAt: convertTimestamp(data.createdAt) || new Date(),
           updatedAt: convertTimestamp(data.updatedAt) || new Date(),
@@ -109,9 +113,11 @@ export const useSchedule = () => {
       const entriesData: ScheduleEntry[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
         entriesData.push({
           id: doc.id,
           ...data,
+          employeeName,
           date: convertTimestamp(data.date) || new Date(),
           createdAt: convertTimestamp(data.createdAt) || new Date(),
           updatedAt: convertTimestamp(data.updatedAt) || new Date(),
@@ -136,9 +142,11 @@ export const useSchedule = () => {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        const employeeName = data.employeeId ? getEmployeeFullName(data.employeeId) : 'Unknown Employee';
         return {
           id: docSnap.id,
           ...data,
+          employeeName,
           date: convertTimestamp(data.date) || new Date(),
           createdAt: convertTimestamp(data.createdAt) || new Date(),
           updatedAt: convertTimestamp(data.updatedAt) || new Date(),
@@ -153,7 +161,7 @@ export const useSchedule = () => {
   };
 
   // Create schedule entry
-  const createScheduleEntry = async (entryData: ScheduleForm): Promise<string> => {
+  const createScheduleEntry = async (entryData: ScheduleForm): Promise<void> => {
     if (!userProfile?.locationId) {
       throw new Error('User location not found');
     }
@@ -161,6 +169,7 @@ export const useSchedule = () => {
     try {
       const docData = {
         ...entryData,
+        employeeName: getEmployeeFullName(entryData.employeeId),
         date: convertToTimestamp(entryData.date),
         locationId: userProfile.locationId,
         createdBy: userProfile.uid,
@@ -168,8 +177,7 @@ export const useSchedule = () => {
         updatedAt: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, 'schedule'), docData);
-      return docRef.id;
+      await addDoc(collection(db, 'schedule'), docData);
     } catch (err: any) {
       setError(err.message);
       console.error('Error creating schedule entry:', err);
@@ -182,6 +190,7 @@ export const useSchedule = () => {
     try {
       const updateData: any = {
         ...entryData,
+        employeeName: getEmployeeFullName(entryData.employeeId),
         date: convertToTimestamp(entryData.date),
         updatedAt: Timestamp.now(),
       };

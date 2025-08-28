@@ -35,12 +35,12 @@ import {
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useSchedule } from '../hooks/useSchedule';
-import { useUsers } from '../hooks/useUsers';
+import { useSchedulingEmployees } from '../hooks/useSchedulingEmployees';
 import type { ScheduleEntry, ScheduleForm } from '../types';
 
 const ScheduleManager: React.FC = () => {
   const { scheduleEntries, createScheduleEntry, updateScheduleEntry, deleteScheduleEntry, loading } = useSchedule();
-  const { users } = useUsers();
+  const { getActiveEmployees } = useSchedulingEmployees();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<ScheduleEntry | null>(null);
@@ -57,7 +57,7 @@ const ScheduleManager: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const activeUsers = users.filter(user => user.isActive);
+  const activeEmployees = getActiveEmployees();
 
   const handleOpenDialog = (entry?: ScheduleEntry) => {
     if (entry) {
@@ -279,9 +279,9 @@ const ScheduleManager: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
                   required
                 >
-                  {activeUsers.map((user) => (
-                    <MenuItem key={user.uid} value={user.uid}>
-                      {user.displayName}
+                  {activeEmployees.map((employee) => (
+                    <MenuItem key={employee.id} value={employee.id}>
+                      {`${employee.firstName} ${employee.lastName}`}
                     </MenuItem>
                   ))}
                 </Select>
