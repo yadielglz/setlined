@@ -29,7 +29,7 @@ import {
   ManageAccounts as ManageAccountsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.tsx';
+import { useAuth } from '../contexts/AuthContext';
 
 const drawerWidth = 240;
 

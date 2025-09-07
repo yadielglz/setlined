@@ -1,16 +1,16 @@
 import { Routes, Route } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
-import { useAuth } from './contexts/AuthContext.tsx';
-import Dashboard from './pages/Dashboard.tsx';
-import Interactions from './pages/Interactions.tsx';
-import Customers from './pages/Customers.tsx';
-import Employees from './pages/Employees.tsx';
-import Calendar from './pages/Calendar.tsx';
-import StorePerformance from './pages/StorePerformance.tsx';
-import ScheduleManagement from './pages/ScheduleManagement.tsx';
-import EmployeeManagement from './pages/EmployeeManagement.tsx';
-import Layout from './components/Layout.tsx';
-import Login from './components/Login.tsx';
+import { useAuth } from './contexts/AuthContext';
+import Dashboard from './pages/Dashboard';
+import Interactions from './pages/Interactions';
+import Customers from './pages/Customers';
+import Employees from './pages/Employees';
+import Calendar from './pages/Calendar';
+import StorePerformance from './pages/StorePerformance';
+import ScheduleManagement from './pages/ScheduleManagement';
+import EmployeeManagement from './pages/EmployeeManagement';
+import Layout from './components/Layout';
+import Login from './components/Login';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();

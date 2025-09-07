@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import {
-  Typography,
   Box,
-  Button,
+  Typography,
   Card,
   CardContent,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  IconButton,
+  Tooltip,
+  Alert,
   Table,
   TableBody,
   TableCell,
@@ -12,42 +25,30 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Chip,
-  IconButton,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Alert,
-  Fab,
-  Avatar
+  TablePagination
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Phone as PhoneIcon,
+  Person as PersonIcon,
   Email as EmailIcon,
-  LocationOn as LocationIcon
+  Phone as PhoneIcon,
+  Star as StarIcon
 } from '@mui/icons-material';
 import { useCustomers } from '../hooks/useCustomers';
 import type { Customer, CustomerForm } from '../types';
 
-const Customers = () => {
+const Customers: React.FC = () => {
   const { customers, loading, error, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const [openDialog, setOpenDialog] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>('all');
+  
   const [formData, setFormData] = useState<CustomerForm>({
     firstName: '',
     lastName: '',
@@ -63,38 +64,6 @@ const Customers = () => {
     customerType: 'new'
   });
 
-  // Ensure address is always defined
-  const safeAddress = formData.address || {
-    street: '',
-    city: '',
-    state: '',
-    zipCode: ''
-  };
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState('');
-
-  // Filter customers based on search and filters
-  const filteredCustomers = customers.filter(customer => {
-    const fullName = `${customer.firstName} ${customer.lastName}`.toLowerCase();
-    const matchesSearch = searchTerm === '' ||
-      fullName.includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone?.includes(searchTerm);
-
-    const matchesType = typeFilter === 'all' || customer.customerType === typeFilter;
-
-    return matchesSearch && matchesType;
-  });
-
-  const getCustomerTypeColor = (type: Customer['customerType']) => {
-    switch (type) {
-      case 'new': return 'primary';
-      case 'existing': return 'secondary';
-      case 'loyalty': return 'success';
-      default: return 'default';
-    }
-  };
-
   const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
       setEditingCustomer(customer);
@@ -103,7 +72,7 @@ const Customers = () => {
         lastName: customer.lastName,
         email: customer.email || '',
         phone: customer.phone || '',
-        dateOfBirth: customer.dateOfBirth ? customer.dateOfBirth.toISOString().split('T')[0] : '',
+        dateOfBirth: customer.dateOfBirth?.toISOString().split('T')[0] || '',
         address: customer.address || {
           street: '',
           city: '',
@@ -129,20 +98,15 @@ const Customers = () => {
         customerType: 'new'
       });
     }
-    setDialogOpen(true);
+    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    setDialogOpen(false);
+    setOpenDialog(false);
     setEditingCustomer(null);
-    setFormError('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormLoading(true);
-    setFormError('');
-
+  const handleSubmit = async () => {
     try {
       if (editingCustomer) {
         await updateCustomer(editingCustomer.id, formData);
@@ -150,72 +114,127 @@ const Customers = () => {
         await createCustomer(formData);
       }
       handleCloseDialog();
-    } catch (err: any) {
-      setFormError(err.message);
-    } finally {
-      setFormLoading(false);
+    } catch (error) {
+      console.error('Error saving customer:', error);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (customerId: string) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
-        await deleteCustomer(id);
-      } catch (err: any) {
-        console.error('Error deleting customer:', err);
+        await deleteCustomer(customerId);
+      } catch (error) {
+        console.error('Error deleting customer:', error);
       }
     }
   };
 
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const getCustomerTypeColor = (type: string) => {
+    switch (type) {
+      case 'new': return 'default';
+      case 'existing': return 'info';
+      case 'loyalty': return 'warning';
+      default: return 'default';
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Filter customers
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = !searchTerm || 
+      customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm);
+    
+    const matchesType = customerTypeFilter === 'all' || customer.customerType === customerTypeFilter;
+    
+    return matchesSearch && matchesType;
+  });
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress />
+        <Typography>Loading customers...</Typography>
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">{error}</Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Customer Management
+          Customers
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Customer
-        </Button>
+        <Typography variant="body1" color="text.secondary">
+          Manage customer information and track loyalty
+        </Typography>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-      {/* Filters */}
-      <Card sx={{ mb: 3 }}>
+      <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">
+              All Customers ({filteredCustomers.length})
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+            >
+              Add Customer
+            </Button>
+          </Box>
+
+          {/* Filters */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
             <TextField
-              placeholder="Search customers..."
+              fullWidth
+              label="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ minWidth: 250 }}
+              placeholder="Search by name, email, or phone..."
+              sx={{ minWidth: 300 }}
             />
-
             <FormControl sx={{ minWidth: 150 }}>
               <InputLabel>Customer Type</InputLabel>
               <Select
-                value={typeFilter}
+                value={customerTypeFilter}
                 label="Customer Type"
-                onChange={(e) => setTypeFilter(e.target.value)}
+                onChange={(e) => setCustomerTypeFilter(e.target.value)}
               >
                 <MenuItem value="all">All Types</MenuItem>
                 <MenuItem value="new">New</MenuItem>
@@ -224,261 +243,261 @@ const Customers = () => {
               </Select>
             </FormControl>
           </Box>
+
+          {/* Customers Table */}
+          <TableContainer component={Paper} variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Contact</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Loyalty Points</TableCell>
+                  <TableCell>Total Purchases</TableCell>
+                  <TableCell>Last Visit</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell align="center">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredCustomers
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((customer) => (
+                    <TableRow key={customer.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PersonIcon fontSize="small" color="action" />
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {customer.firstName} {customer.lastName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          {customer.email && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <EmailIcon fontSize="small" color="action" />
+                              <Typography variant="caption">{customer.email}</Typography>
+                            </Box>
+                          )}
+                          {customer.phone && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <PhoneIcon fontSize="small" color="action" />
+                              <Typography variant="caption">{customer.phone}</Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={customer.customerType}
+                          size="small"
+                          color={getCustomerTypeColor(customer.customerType) as any}
+                          sx={{ textTransform: 'capitalize' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <StarIcon fontSize="small" color="warning" />
+                          <Typography variant="body2">
+                            {customer.loyaltyPoints}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {formatCurrency(customer.totalPurchases)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {customer.lastVisitDate ? formatDate(customer.lastVisitDate) : 'Never'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {customer.createdAt ? formatDate(customer.createdAt) : 'Unknown'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Edit">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDialog(customer)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(customer.id)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {filteredCustomers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No customers found
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredCustomers.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
         </CardContent>
       </Card>
 
-      {/* Customers Table */}
-      <Card>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Customer</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Loyalty Points</TableCell>
-                <TableCell>Total Purchases</TableCell>
-                <TableCell>Last Visit</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
-                        {customer.firstName.charAt(0)}{customer.lastName.charAt(0)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body1" fontWeight="medium">
-                          {customer.firstName} {customer.lastName}
-                        </Typography>
-                        {customer.dateOfBirth && (
-                          <Typography variant="body2" color="text.secondary">
-                            Age: {new Date().getFullYear() - customer.dateOfBirth.getFullYear()}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {customer.email && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <EmailIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">{customer.email}</Typography>
-                        </Box>
-                      )}
-                      {customer.phone && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <PhoneIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">{customer.phone}</Typography>
-                        </Box>
-                      )}
-                      {customer.address && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <LocationIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">
-                            {customer.address.city}, {customer.address.state}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={customer.customerType}
-                      color={getCustomerTypeColor(customer.customerType)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="primary">
-                      {customer.loyaltyPoints.toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="success.main">
-                      ${customer.totalPurchases.toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {customer.lastVisitDate ? (
-                      <Typography variant="body2">
-                        {customer.lastVisitDate.toLocaleDateString()}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        Never
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenDialog(customer)}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(customer.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredCustomers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <Typography variant="body2" color="text.secondary">
-                      No customers found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-
-      {/* Add Customer FAB for mobile */}
-      <Fab
-        color="primary"
-        aria-label="add customer"
-        sx={{ position: 'fixed', bottom: 16, right: 16, display: { xs: 'flex', md: 'none' } }}
-        onClick={() => handleOpenDialog()}
-      >
-        <AddIcon />
-      </Fab>
-
-      {/* Add/Edit Customer Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      {/* Customer Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+          {editingCustomer ? 'Edit Customer' : 'Add Customer'}
         </DialogTitle>
         <DialogContent>
-          {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <TextField
-                label="First Name"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                sx={{ minWidth: 200 }}
-                required
-              />
-
-              <TextField
-                label="Last Name"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                sx={{ minWidth: 200 }}
-                required
-              />
-
-              <TextField
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                sx={{ minWidth: 250 }}
-              />
-
-              <TextField
-                label="Phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                sx={{ minWidth: 200 }}
-              />
-
-              <TextField
-                label="Date of Birth"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-                sx={{ minWidth: 200 }}
-              />
-
-              <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel>Customer Type</InputLabel>
-                <Select
-                  value={formData.customerType}
-                  label="Customer Type"
-                  onChange={(e) => setFormData({ ...formData, customerType: e.target.value as Customer['customerType'] })}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   required
-                >
-                  <MenuItem value="new">New</MenuItem>
-                  <MenuItem value="existing">Existing</MenuItem>
-                  <MenuItem value="loyalty">Loyalty</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-              Address
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                />
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  required
+                />
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Date of Birth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <FormControl fullWidth>
+                  <InputLabel>Customer Type</InputLabel>
+                  <Select
+                    value={formData.customerType}
+                    label="Customer Type"
+                    onChange={(e) => setFormData({ ...formData, customerType: e.target.value as any })}
+                  >
+                    <MenuItem value="new">New</MenuItem>
+                    <MenuItem value="existing">Existing</MenuItem>
+                    <MenuItem value="loyalty">Loyalty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Address (Optional)
+              </Typography>
               <TextField
+                fullWidth
                 label="Street Address"
-                value={safeAddress.street}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  address: { ...safeAddress, street: e.target.value }
+                value={formData.address?.street || ''}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  address: { 
+                    street: e.target.value,
+                    city: formData.address?.city || '',
+                    state: formData.address?.state || '',
+                    zipCode: formData.address?.zipCode || ''
+                  }
                 })}
-                sx={{ minWidth: 300 }}
               />
-
-              <TextField
-                label="City"
-                value={safeAddress.city}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  address: { ...safeAddress, city: e.target.value }
-                })}
-                sx={{ minWidth: 150 }}
-              />
-
-              <TextField
-                label="State"
-                value={safeAddress.state}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  address: { ...safeAddress, state: e.target.value }
-                })}
-                sx={{ minWidth: 100 }}
-              />
-
-              <TextField
-                label="ZIP Code"
-                value={safeAddress.zipCode}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  address: { ...safeAddress, zipCode: e.target.value }
-                })}
-                sx={{ minWidth: 120 }}
-              />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="City"
+                  value={formData.address?.city || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    address: { 
+                      street: formData.address?.street || '',
+                      city: e.target.value,
+                      state: formData.address?.state || '',
+                      zipCode: formData.address?.zipCode || ''
+                    }
+                  })}
+                />
+                <TextField
+                  fullWidth
+                  label="State"
+                  value={formData.address?.state || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    address: { 
+                      street: formData.address?.street || '',
+                      city: formData.address?.city || '',
+                      state: e.target.value,
+                      zipCode: formData.address?.zipCode || ''
+                    }
+                  })}
+                />
+                <TextField
+                  fullWidth
+                  label="ZIP Code"
+                  value={formData.address?.zipCode || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    address: { 
+                      street: formData.address?.street || '',
+                      city: formData.address?.city || '',
+                      state: formData.address?.state || '',
+                      zipCode: e.target.value
+                    }
+                  })}
+                />
+              </Box>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={formLoading}
-          >
-            {formLoading ? <CircularProgress size={20} /> : (editingCustomer ? 'Update' : 'Create')}
+          <Button onClick={handleSubmit} variant="contained">
+            {editingCustomer ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </>
   );
 };
 

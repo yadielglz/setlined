@@ -86,6 +86,13 @@ export const useAppointments = () => {
             appointment.assignedTo === filters.assignedTo
           );
         }
+        if (filters.dateRange) {
+          filteredAppointments = filteredAppointments.filter(appointment =>
+            appointment.scheduledDate &&
+            appointment.scheduledDate >= filters.dateRange!.start &&
+            appointment.scheduledDate <= filters.dateRange!.end
+          );
+        }
       }
 
       setAppointments(filteredAppointments);
@@ -168,7 +175,7 @@ export const useAppointments = () => {
         ...appointmentData,
         scheduledDate: convertToTimestamp(appointmentData.scheduledDate),
         locationId: userProfile.locationId,
-        status: 'scheduled',
+        createdBy: userProfile.uid,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
@@ -213,19 +220,15 @@ export const useAppointments = () => {
     }
   };
 
-  // Get appointments by date range
-  const getAppointmentsByDateRange = async (startDate: Date, endDate: Date): Promise<Appointment[]> => {
+  // Get appointments by customer
+  const getAppointmentsByCustomer = async (customerId: string): Promise<Appointment[]> => {
     if (!userProfile?.locationId) return [];
 
     try {
-      const startTimestamp = Timestamp.fromDate(startDate);
-      const endTimestamp = Timestamp.fromDate(endDate);
-
       const q = query(
         collection(db, 'appointments'),
+        where('customerId', '==', customerId),
         where('locationId', '==', userProfile.locationId),
-        where('scheduledDate', '>=', startTimestamp),
-        where('scheduledDate', '<=', endTimestamp),
         orderBy('scheduledDate', 'asc')
       );
 
@@ -246,7 +249,7 @@ export const useAppointments = () => {
       return appointmentsData;
     } catch (err: any) {
       setError(err.message);
-      console.error('Error getting appointments by date range:', err);
+      console.error('Error getting appointments by customer:', err);
       return [];
     }
   };
@@ -285,15 +288,6 @@ export const useAppointments = () => {
     }
   };
 
-  // Get upcoming appointments (next 7 days)
-  const getUpcomingAppointments = async (days: number = 7): Promise<Appointment[]> => {
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + days);
-
-    return getAppointmentsByDateRange(startDate, endDate);
-  };
-
   return {
     appointments,
     loading,
@@ -303,8 +297,7 @@ export const useAppointments = () => {
     createAppointment,
     updateAppointment,
     deleteAppointment,
-    getAppointmentsByDateRange,
+    getAppointmentsByCustomer,
     getAppointmentsByAssignedUser,
-    getUpcomingAppointments,
   };
 };

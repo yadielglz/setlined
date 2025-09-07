@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  sendPasswordResetEmail,
-} from 'firebase/auth';
-import {
   collection,
   doc,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
   query,
+  where,
   orderBy,
+  onSnapshot,
   Timestamp
 } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { db } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
 import type { AppUser, AppUserForm } from '../types';
 
 export const useUsers = () => {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { userProfile } = useAuth();
 
   // Convert Firestore timestamp to Date
   const convertTimestamp = (timestamp: any): Date | undefined => {
@@ -30,26 +30,37 @@ export const useUsers = () => {
     return new Date(timestamp);
   };
 
-  // Fetch all users from Firestore (user profiles)
+  // Fetch all users for user's location (only admins and managers can see all users)
   const fetchUsers = async () => {
+    if (!userProfile?.locationId || (userProfile.role !== 'admin' && userProfile.role !== 'manager')) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      const q = query(
+        collection(db, 'users'),
+        where('locationId', '==', userProfile.locationId),
+        orderBy('displayName', 'asc')
+      );
+
       const querySnapshot = await getDocs(q);
       const usersData: AppUser[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         usersData.push({
+          id: doc.id,
           uid: doc.id,
           email: data.email,
-          displayName: data.displayName || '',
-          role: data.role || 'rep',
+          displayName: data.displayName,
+          role: data.role,
           locationId: data.locationId,
-          isActive: data.isActive !== false, // Default to active
-          emailVerified: data.emailVerified || false,
+          isActive: data.isActive,
+          emailVerified: data.emailVerified,
           lastSignIn: convertTimestamp(data.lastSignIn),
           createdAt: convertTimestamp(data.createdAt) || new Date(),
           updatedAt: convertTimestamp(data.updatedAt),
@@ -65,152 +76,192 @@ export const useUsers = () => {
     }
   };
 
-  // Create a new Firebase Auth user and their profile
+  // Real-time listener for users
+  useEffect(() => {
+    if (!userProfile?.locationId || (userProfile.role !== 'admin' && userProfile.role !== 'manager')) {
+      setLoading(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'users'),
+      where('locationId', '==', userProfile.locationId),
+      orderBy('displayName', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const usersData: AppUser[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        usersData.push({
+          id: doc.id,
+          uid: doc.id,
+          email: data.email,
+          displayName: data.displayName,
+          role: data.role,
+          locationId: data.locationId,
+          isActive: data.isActive,
+          emailVerified: data.emailVerified,
+          lastSignIn: convertTimestamp(data.lastSignIn),
+          createdAt: convertTimestamp(data.createdAt) || new Date(),
+          updatedAt: convertTimestamp(data.updatedAt),
+        } as AppUser);
+      });
+      setUsers(usersData);
+      setLoading(false);
+    }, (err) => {
+      setError(err.message);
+      console.error('Error in users listener:', err);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, [userProfile?.locationId, userProfile?.role]);
+
+  // Get single user
+  const getUser = async (id: string): Promise<AppUser | null> => {
+    try {
+      const docRef = doc(db, 'users', id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          uid: docSnap.id,
+          email: data.email,
+          displayName: data.displayName,
+          role: data.role,
+          locationId: data.locationId,
+          isActive: data.isActive,
+          emailVerified: data.emailVerified,
+          lastSignIn: convertTimestamp(data.lastSignIn),
+          createdAt: convertTimestamp(data.createdAt) || new Date(),
+          updatedAt: convertTimestamp(data.updatedAt),
+        } as AppUser;
+      }
+      return null;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error getting user:', err);
+      return null;
+    }
+  };
+
+  // Create user (admin only)
   const createUser = async (userData: AppUserForm): Promise<string> => {
-    if (!userData.password) {
-      throw new Error('Password is required for new users');
+    if (userProfile?.role !== 'admin') {
+      throw new Error('Only administrators can create users');
+    }
+
+    if (!userProfile?.locationId) {
+      throw new Error('User location not found');
     }
 
     try {
-      // Create Firebase Auth user
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        userData.email,
-        userData.password
-      );
-
-      const user = userCredential.user;
-
-      // Update the user's display name
-      await updateProfile(user, {
-        displayName: userData.displayName,
-      });
-
-      // Create user profile in Firestore
-      const userProfileData = {
-        email: userData.email,
-        displayName: userData.displayName,
-        role: userData.role,
-        locationId: userData.locationId,
-        isActive: userData.isActive,
-        emailVerified: user.emailVerified,
+      const docData = {
+        ...userData,
+        locationId: userProfile.locationId,
+        createdBy: userProfile.uid,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
 
-      await addDoc(collection(db, 'users'), userProfileData);
-
-      await fetchUsers();
-      return user.uid;
+      const docRef = await addDoc(collection(db, 'users'), docData);
+      return docRef.id;
     } catch (err: any) {
+      setError(err.message);
       console.error('Error creating user:', err);
-      throw new Error(err.message);
+      throw err;
     }
   };
 
-  // Update user profile and role
-  const updateUser = async (uid: string, userData: Partial<AppUserForm>): Promise<void> => {
-    try {
-      const userDocRef = doc(db, 'users', uid);
+  // Update user (admin and manager can update)
+  const updateUser = async (id: string, userData: Partial<AppUserForm>): Promise<void> => {
+    if (userProfile?.role !== 'admin' && userProfile?.role !== 'manager') {
+      throw new Error('Only administrators and managers can update users');
+    }
 
+    try {
       const updateData: any = {
+        ...userData,
         updatedAt: Timestamp.now(),
       };
 
-      if (userData.displayName !== undefined) updateData.displayName = userData.displayName;
-      if (userData.role !== undefined) updateData.role = userData.role;
-      if (userData.locationId !== undefined) updateData.locationId = userData.locationId;
-      if (userData.isActive !== undefined) updateData.isActive = userData.isActive;
-
-      await updateDoc(userDocRef, updateData);
-
-      // If email is being updated, we would need admin privileges
-      // This is a simplified version - in production you'd use Firebase Admin SDK
-
-      await fetchUsers();
+      await updateDoc(doc(db, 'users', id), updateData);
     } catch (err: any) {
+      setError(err.message);
       console.error('Error updating user:', err);
-      throw new Error(err.message);
+      throw err;
     }
   };
 
-  // Toggle user active status
-  const toggleUserStatus = async (uid: string, currentStatus: boolean): Promise<void> => {
-    try {
-      const userDocRef = doc(db, 'users', uid);
-      await updateDoc(userDocRef, {
-        isActive: !currentStatus,
-        updatedAt: Timestamp.now(),
-      });
-
-      await fetchUsers();
-    } catch (err: any) {
-      console.error('Error toggling user status:', err);
-      throw new Error(err.message);
+  // Delete user (admin only)
+  const deleteUser = async (id: string): Promise<void> => {
+    if (userProfile?.role !== 'admin') {
+      throw new Error('Only administrators can delete users');
     }
-  };
 
-  // Send password reset email
-  const resetUserPassword = async (email: string): Promise<void> => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await deleteDoc(doc(db, 'users', id));
     } catch (err: any) {
-      console.error('Error sending password reset:', err);
-      throw new Error(err.message);
-    }
-  };
-
-  // Delete user (both Auth and Firestore)
-  const deleteAppUser = async (uid: string): Promise<void> => {
-    try {
-      // Note: Deleting Firebase Auth users requires Admin SDK in production
-      // This is a simplified version for development
-
-      // Delete from Firestore first
-      const userDocRef = doc(db, 'users', uid);
-      await deleteDoc(userDocRef);
-
-      // In production, you'd use Firebase Admin SDK to delete the Auth user
-      // For now, we'll just remove the profile
-
-      await fetchUsers();
-    } catch (err: any) {
+      setError(err.message);
       console.error('Error deleting user:', err);
-      throw new Error(err.message);
+      throw err;
     }
   };
 
   // Get users by role
-  const getUsersByRole = (role: 'rep' | 'manager' | 'admin'): AppUser[] => {
-    return users.filter(user => user.role === role);
-  };
+  const getUsersByRole = async (role: 'rep' | 'manager' | 'admin'): Promise<AppUser[]> => {
+    if (!userProfile?.locationId || (userProfile.role !== 'admin' && userProfile.role !== 'manager')) {
+      return [];
+    }
 
-  // Get users by location
-  const getUsersByLocation = (locationId: string): AppUser[] => {
-    return users.filter(user => user.locationId === locationId);
-  };
+    try {
+      const q = query(
+        collection(db, 'users'),
+        where('locationId', '==', userProfile.locationId),
+        where('role', '==', role),
+        orderBy('displayName', 'asc')
+      );
 
-  // Get active users only
-  const getActiveUsers = (): AppUser[] => {
-    return users.filter(user => user.isActive);
-  };
+      const querySnapshot = await getDocs(q);
+      const usersData: AppUser[] = [];
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        usersData.push({
+          id: doc.id,
+          uid: doc.id,
+          email: data.email,
+          displayName: data.displayName,
+          role: data.role,
+          locationId: data.locationId,
+          isActive: data.isActive,
+          emailVerified: data.emailVerified,
+          lastSignIn: convertTimestamp(data.lastSignIn),
+          createdAt: convertTimestamp(data.createdAt) || new Date(),
+          updatedAt: convertTimestamp(data.updatedAt),
+        } as AppUser);
+      });
+
+      return usersData;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error getting users by role:', err);
+      return [];
+    }
+  };
 
   return {
     users,
     loading,
     error,
+    fetchUsers,
+    getUser,
     createUser,
     updateUser,
-    toggleUserStatus,
-    resetUserPassword,
-    deleteAppUser,
+    deleteUser,
     getUsersByRole,
-    getUsersByLocation,
-    getActiveUsers,
-    refetch: fetchUsers,
   };
 };

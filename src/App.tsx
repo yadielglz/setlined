@@ -1,9 +1,9 @@
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter } from 'react-router-dom';
-import theme from './theme.ts';
-import { AuthProvider } from './contexts/AuthContext.tsx';
-import AppRoutes from './AppRoutes.tsx';
+import theme from './theme';
+import { AuthProvider } from './contexts/AuthContext';
+import AppRoutes from './AppRoutes';
 
 function App() {
   return (

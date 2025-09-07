@@ -1,15 +1,99 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection - allow authenticated users to read/write
-    // Frontend handles role-based permissions
-    match /users/{userId} {
-      allow read, write: if request.auth != null;
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasLocationAccess(locationId) {
+      return getUserData().locationId == locationId;
+    }
+    
+    function isAdmin() {
+      return getUserData().role == 'admin';
+    }
+    
+    function isManager() {
+      return getUserData().role == 'manager' || isAdmin();
+    }
+    
+    function isRep() {
+      return getUserData().role == 'rep' || isManager();
     }
 
-    // All other collections - allow authenticated users full access
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Users collection - role-based access
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        userId == request.auth.uid || 
+        isManager() && hasLocationAccess(resource.data.locationId)
+      );
+      allow write: if isAuthenticated() && (
+        userId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // Customers collection - location-based access
+    match /customers/{customerId} {
+      allow read, write: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Interactions collection - location-based access
+    match /interactions/{interactionId} {
+      allow read, write: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Appointments collection - location-based access
+    match /appointments/{appointmentId} {
+      allow read, write: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Schedule collection - location-based access, managers and admins only for write
+    match /schedule/{scheduleId} {
+      allow read: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow write: if isAuthenticated() && isManager() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && isManager() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Scheduling employees collection - location-based access, managers and admins only for write
+    match /schedulingEmployees/{employeeId} {
+      allow read: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow write: if isAuthenticated() && isManager() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && isManager() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Store performance collection - location-based access, managers and admins only for write
+    match /storePerformance/{performanceId} {
+      allow read: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow write: if isAuthenticated() && isManager() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && isManager() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Regular employees collection - location-based access, managers and admins only for write
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow write: if isAuthenticated() && isManager() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && isManager() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Communications collection - location-based access
+    match /communications/{communicationId} {
+      allow read, write: if isAuthenticated() && hasLocationAccess(resource.data.locationId);
+      allow create: if isAuthenticated() && hasLocationAccess(request.resource.data.locationId);
+    }
+
+    // Locations collection - admin only
+    match /locations/{locationId} {
+      allow read: if isAuthenticated() && hasLocationAccess(locationId);
+      allow write: if isAuthenticated() && isAdmin();
     }
   }
 }
